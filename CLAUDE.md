@@ -60,6 +60,11 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   OS_STATE_STOPPED (1) and then breaks into the game's crash handler. ultramodern keeps its own states in that field,
   where 1 is QUEUED, so the hook in `us.toml` parks the idle thread for good instead. Without it the program ends
   with 0xC0000409 a few seconds in.
+- **The RSP's done message.** ultramodern tells a game a graphics task's RSP work is done as RT64 starts it, which
+  holds for games that keep a list's inputs until the RDP is done too. This one changes them once the RSP is done, so
+  `runtime-patches/` sends the message once RT64 has read the list. Without it a slow renderer (lavapipe, a page on a
+  busy host) read lists being rewritten: a crash in `RT64::Interpreter::processDisplayLists`, "Unable to find a
+  matching GBI", or the page's Aborted(OOM).
 - **Microcodes.** Graphics: F3DEX.NoN 1.23, which RT64 knows. Audio: `aspMain` (libultra's ABI 1), recompiled by
   RSPRecomp from `aspMain.us.toml`. librecomp's vector unit uses SSE4.1, so `RecompiledFuncs` builds with
   `-march=nehalem` on x86-64.
