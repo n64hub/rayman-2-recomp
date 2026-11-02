@@ -68,6 +68,18 @@ func = "func_800B273C"
 before_vram = 0x800B273C
 text = "if (MEM_W(0, (gpr)(int32_t)0x800DFECC) >= MEM_W(0, (gpr)(int32_t)0x800DFED0)) { ctx->r2 = 1; return; }"
 
+# A menu's backdrop clears black. Each frame func_8008DC44 clears the colour image with a fill of the viewport's colour
+# (+0x7C, the level's fog: teal in the Woods of Light), or of black where 0x800C8DB3 is set (the Controller Pak's
+# screens). While a menu shows its backdrop (the pause menu and its pages), a script sets 0x800C87D0, and
+# func_8009496C draws the menu's opaque gradient (func_80098D58) over the whole 4:3 in place of the level's sky, so on
+# a console the fill never shows. RT64 widens a fill of the whole screen to the window's edges but keeps the gradient
+# and the swirl drawn over it at 4:3, so in a wide picture the fill showed either side as the level's colour. With
+# 0x800C87D0 set the clear takes its black fill.
+[[patches.hook]]
+func = "func_8008DC44"
+before_vram = 0x8008DE30
+text = "if (MEM_BU(0, (gpr)(int32_t)0x800C87D0) != 0) ctx->r3 = 1;"
+
 # The idle thread (func_800004C0, once it has started the game's threads) is a watchdog: it waits for the main thread's
 # OSThread state to read 1, libultra's OS_STATE_STOPPED, and then breaks. The runtime keeps its own states in that
 # field, where 1 is QUEUED, so it would break while the game runs. The runtime has no idle thread to stand in for, so
