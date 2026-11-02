@@ -1,0 +1,15 @@
+# N64Recomp's configuration for Rayman 2: The Great Escape (USA), SHA-1 50558356b059ad3fbaf5fe95380512b9dceaaf52: it
+# reads the game's code out of the ROM by the symbols in syms/ (tools/gen_syms.py, from the ROM alone) and writes
+# RecompiledFuncs/ (tools/recompile.sh). The code is stored raw in the ROM, so there is nothing to decompress first.
+[input]
+# The ROM header's entrypoint, the start of the boot segment.
+entrypoint = 0x80000400
+# Paths are relative to this file.
+symbols_file_path = "syms/rayman2.us.syms.toml"
+rom_file_path = "roms/rayman2.us.z64"
+output_func_path = "RecompiledFuncs"
+use_absolute_symbols = true
+
+[patches]
+# libultra's internals (its exception handler, the managers' threads, the raw SI and PI access) are N64Recomp's own
+# ignored functions, by the names syms/ gives them: the runtime replaces what calls them.
