@@ -1,0 +1,318 @@
+{
+ "page": "Rayman2Recompiled.html",
+ "header": [
+  "The page's plan for N64Recomp-browser's tools/play_page.mjs, its regular play of 2-3 minutes: the launcher, Load ROM",
+  "on a new profile once the shader list Chrome builds behind it is done (Firefox builds none there and says so), Start",
+  "Game, the logos and the attract demo, then Start (Enter) to the main menu and A (Space) through New Game, a slot and a",
+  "name to the intro story, as a player does: the menus go by the level the game is in, tools/survey.js's level(). The",
+  "intro story plays 25 s, and then the plan changes level as the game's own exits do (survey.js's go(), each a need that",
+  "fails the run unless the game plays that level): the prison ship (jail_20), A through its first lines, and the Woods",
+  "of Light (learn_10), walked and jumped about for 40 s. tools/play_plan_extended.json goes on to five more levels, for",
+  "when a longer play is needed. Its waits and holds are on the game's own clock (survey.js's clock(), 60 a second of",
+  "play)."
+ ],
+ "load": [
+  [
+   "until",
+   "RT64: all [0-9]+ prebuilt shaders built|once the game draws",
+   45000
+  ],
+  [
+   "wait",
+   3000
+  ]
+ ],
+ "setup": [
+  [
+   "rom",
+   627,
+   364
+  ],
+  [
+   "wait",
+   3000
+  ]
+ ],
+ "start": [
+  [
+   "eval",
+   "(() => { try { FS.unlink('/home/web_user/.config/Rayman2Recompiled/saves/controllerpak_1.mpk'); return 'deleted'; } catch (e) { return 'none'; } })()"
+  ],
+  [
+   "click",
+   627,
+   364
+  ],
+  [
+   "wait",
+   1000
+  ],
+  [
+   "evalFile",
+   "survey.js"
+  ],
+  [
+   "pressUntil",
+   "Enter",
+   "Enter",
+   13,
+   150,
+   2000,
+   "r2.level() == \"menu\"",
+   40000
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "shot",
+   "menu.png"
+  ],
+  [
+   "pressUntil",
+   "Space",
+   " ",
+   32,
+   150,
+   2500,
+   "r2.level() == \"jail_10\"",
+   60000
+  ],
+  [
+   "need",
+   "r2.playing(\"jail_10\")"
+  ],
+  [
+   "clock",
+   "r2.clock()",
+   60
+  ],
+  [
+   "wait",
+   10000
+  ],
+  [
+   "clock"
+  ]
+ ],
+ "play": [
+  [
+   "clock",
+   "r2.clock()",
+   60
+  ],
+  [
+   "wait",
+   15000
+  ],
+  [
+   "shot",
+   "story.png"
+  ],
+  [
+   "need",
+   "r2.go(\"jail_20\", 60000)"
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "hold",
+   "Space",
+   " ",
+   32,
+   150
+  ],
+  [
+   "wait",
+   2500
+  ],
+  [
+   "hold",
+   "Space",
+   " ",
+   32,
+   150
+  ],
+  [
+   "wait",
+   2500
+  ],
+  [
+   "hold",
+   "Space",
+   " ",
+   32,
+   150
+  ],
+  [
+   "wait",
+   2500
+  ],
+  [
+   "hold",
+   "Space",
+   " ",
+   32,
+   150
+  ],
+  [
+   "wait",
+   2500
+  ],
+  [
+   "shot",
+   "jail_20.png"
+  ],
+  [
+   "hold",
+   "KeyW",
+   "w",
+   87,
+   2000
+  ],
+  [
+   "hold",
+   "KeyA",
+   "a",
+   65,
+   1500
+  ],
+  [
+   "hold",
+   "KeyW",
+   "w",
+   87,
+   2000
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "eval",
+   "console.log(\"[plan] \" + r2.where()); true"
+  ],
+  [
+   "need",
+   "r2.go(\"learn_10\", 60000)"
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "hold",
+   "KeyW",
+   "w",
+   87,
+   3000
+  ],
+  [
+   "hold",
+   "Space",
+   " ",
+   32,
+   300
+  ],
+  [
+   "hold",
+   "KeyD",
+   "d",
+   68,
+   1000
+  ],
+  [
+   "hold",
+   "KeyW",
+   "w",
+   87,
+   3000
+  ],
+  [
+   "wait",
+   1500
+  ],
+  [
+   "shot",
+   "learn_10.png"
+  ],
+  [
+   "hold",
+   "KeyA",
+   "a",
+   65,
+   1500
+  ],
+  [
+   "hold",
+   "KeyW",
+   "w",
+   87,
+   3000
+  ],
+  [
+   "hold",
+   "Space",
+   " ",
+   32,
+   300
+  ],
+  [
+   "hold",
+   "KeyW",
+   "w",
+   87,
+   2000
+  ],
+  [
+   "hold",
+   "KeyD",
+   "d",
+   68,
+   2000
+  ],
+  [
+   "hold",
+   "KeyW",
+   "w",
+   87,
+   3000
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "hold",
+   "Space",
+   " ",
+   32,
+   300
+  ],
+  [
+   "hold",
+   "KeyA",
+   "a",
+   65,
+   2000
+  ],
+  [
+   "hold",
+   "KeyW",
+   "w",
+   87,
+   4000
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "console.log(\"[plan] \" + r2.where()); true"
+  ]
+ ]
+}

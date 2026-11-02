@@ -1,0 +1,51 @@
+# N64Recomp's configuration for Rayman 2: The Great Escape (USA), SHA-1 50558356b059ad3fbaf5fe95380512b9dceaaf52: it
+# reads the game's code out of the ROM by the symbols in syms/ (tools/gen_syms.py, from the ROM alone) and writes
+# RecompiledFuncs/ (tools/recompile.sh). The code is stored raw in the ROM, so there is nothing to decompress first.
+[input]
+# The ROM header's entrypoint, the start of the boot segment.
+entrypoint = 0x80000400
+# Paths are relative to this file.
+symbols_file_path = "syms/rayman2.us.syms.toml"
+rom_file_path = "roms/rayman2.us.z64"
+output_func_path = "RecompiledFuncs"
+use_absolute_symbols = true
+
+[patches]
+# libultra's internals (its exception handler, the managers' threads, the raw SI and PI access) are N64Recomp's own
+# ignored functions, by the names syms/ gives them: the runtime replaces what calls them.
+
+# Spins. The runtime runs one game thread at a time and switches only when the running one calls into it, where a
+# console's interrupts preempt any thread. The game waits for its controller thread (func_8008EF78, woken by the SI's
+# messages) to finish a Controller Pak request by spinning on that thread's state byte, 0x800C8D10, until it is 0
+# (func_8008EF6C reads it): each pass yields, or the controller thread never runs and the game freezes on the screen
+# after it reads the pak (the "Expansion Pak detected!" screen at boot).
+[[patches.hook]]
+func = "func_8008F344"
+before_vram = 0x8008F35C
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "func_800FADC8"
+before_vram = 0x800FB020
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+# Each frame the main thread waits in func_8008FAF8 for 0x800CE2C4 to be 0 and 0x800EFE70 to be 1, which the
+# controller thread sets as it finishes reading the controllers: each pass that waits yields.
+[[patches.hook]]
+func = "func_8008FAF8"
+before_vram = 0x8008FB04
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "func_8008FAF8"
+before_vram = 0x8008FB1C
+text = "{ void yield_self(uint8_t*); if (ctx->r3 != ctx->r2) yield_self(rdram); }"
+
+# The idle thread (func_800004C0, once it has started the game's threads) is a watchdog: it waits for the main thread's
+# OSThread state to read 1, libultra's OS_STATE_STOPPED, and then breaks. The runtime keeps its own states in that
+# field, where 1 is QUEUED, so it would break while the game runs. The runtime has no idle thread to stand in for, so
+# it waits there for good and lets the other threads run.
+[[patches.hook]]
+func = "func_800004C0"
+before_vram = 0x80000698
+text = "{ void pause_self(uint8_t*); pause_self(rdram); }"
