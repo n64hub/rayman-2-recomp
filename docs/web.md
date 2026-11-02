@@ -44,7 +44,7 @@ that level. So a plan reaches any level with a new game, without a save. The sur
 by reading RDRAM as the game played (there is no decomp); the waits in a level are on the game's own clock, 60 a
 second of play.
 
-`tools/play_plan.json` (about 2.5 minutes) boots, shoots the menu, watches 15 s of the intro story, then plays the
+`tools/play_plan.json` (about 2.5 minutes) boots, shoots the menu, watches 25 s of the intro story, then plays the
 prison ship (jail_20) and walks about the Woods of Light (learn_10). `tools/play_plan_extended.json` (about 5
 minutes) goes on to five more levels. Play them with N64Recomp-browser's `tools/play_page.mjs` (its
 `docs/playing.md`).
