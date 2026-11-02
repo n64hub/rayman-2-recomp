@@ -70,6 +70,11 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   that fast. The recomp's does, and such a frame calls the load blocks the frame before wrote, where its own commands
   now go: textures from the wrong place, or a call to itself that RT64 follows until the page ends with Aborted(OOM).
   A hook in `us.toml` holds a frame that would start in the same count until the next retrace.
+- **The sound queue.** The game's sound engine queues calls in an array of 250 with no check of its size, emptied
+  as each audio frame is made and filled each retrace with the stops of finished voices. A graphics list RT64 takes
+  long to read (lavapipe building a pipeline) holds back the audio task, and after about 84 retraces the queue
+  overwrites the voice table after it: "Failed to find function at 0x8019B..." at the next retrace. A hook in
+  `us.toml` drops what would go past its end.
 - **Microcodes.** Graphics: F3DEX.NoN 1.23, which RT64 knows. Audio: `aspMain` (libultra's ABI 1), recompiled by
   RSPRecomp from `aspMain.us.toml`. librecomp's vector unit uses SSE4.1, so `RecompiledFuncs` builds with
   `-march=nehalem` on x86-64.
