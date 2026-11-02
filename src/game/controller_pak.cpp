@@ -320,7 +320,6 @@ int find_note(uint8_t* rdram, Pak& pak, uint16_t company, uint32_t game_code, gp
 
 // s32 osPfsInitPak(OSMesgQueue* mq, OSPfs* pfs, int channel)
 extern "C" void osPfsInitPak_recomp(uint8_t* rdram, recomp_context* ctx) {
-    fprintf(stderr, "TRACE %s %x %x %x\n", "osPfsInitPak", (unsigned)ctx->r4, (unsigned)ctx->r5, (unsigned)ctx->r6);
     std::lock_guard lock{ pak_mutex };
     gpr pfs = ctx->r5;
     int channel = (int)ctx->r6;
@@ -359,19 +358,16 @@ extern "C" void osPfsInitPak_recomp(uint8_t* rdram, recomp_context* ctx) {
 
 // s32 osPfsRepairId(OSPfs* pfs)
 extern "C" void osPfsRepairId_recomp(uint8_t* rdram, recomp_context* ctx) {
-    fprintf(stderr, "TRACE %s %x %x %x\n", "osPfsRepairId", (unsigned)ctx->r4, (unsigned)ctx->r5, (unsigned)ctx->r6);
     ctx->r2 = 0;
 }
 
 // s32 osPfsChecker(OSPfs* pfs)
 extern "C" void osPfsChecker_recomp(uint8_t* rdram, recomp_context* ctx) {
-    fprintf(stderr, "TRACE %s %x %x %x\n", "osPfsChecker", (unsigned)ctx->r4, (unsigned)ctx->r5, (unsigned)ctx->r6);
     ctx->r2 = 0;
 }
 
 // s32 osPfsFreeBlocks(OSPfs* pfs, s32* bytes_not_used)
 extern "C" void osPfsFreeBlocks_recomp(uint8_t* rdram, recomp_context* ctx) {
-    fprintf(stderr, "TRACE %s %x %x %x\n", "osPfsFreeBlocks", (unsigned)ctx->r4, (unsigned)ctx->r5, (unsigned)ctx->r6);
     std::lock_guard lock{ pak_mutex };
     Pak& pak = get_pak(pfs_port(rdram, ctx->r4));
     MEM_W(0, ctx->r5) = free_pages(pak) * (int32_t)page_size;
@@ -380,7 +376,6 @@ extern "C" void osPfsFreeBlocks_recomp(uint8_t* rdram, recomp_context* ctx) {
 
 // s32 osPfsNumFiles(OSPfs* pfs, s32* max_files, s32* files_used)
 extern "C" void osPfsNumFiles_recomp(uint8_t* rdram, recomp_context* ctx) {
-    fprintf(stderr, "TRACE %s %x %x %x\n", "osPfsNumFiles", (unsigned)ctx->r4, (unsigned)ctx->r5, (unsigned)ctx->r6);
     std::lock_guard lock{ pak_mutex };
     Pak& pak = get_pak(pfs_port(rdram, ctx->r4));
     int used = 0;
@@ -394,7 +389,6 @@ extern "C" void osPfsNumFiles_recomp(uint8_t* rdram, recomp_context* ctx) {
 
 // s32 osPfsFileState(OSPfs* pfs, s32 file_no, OSPfsState* state)
 extern "C" void osPfsFileState_recomp(uint8_t* rdram, recomp_context* ctx) {
-    fprintf(stderr, "TRACE %s %x %x %x\n", "osPfsFileState", (unsigned)ctx->r4, (unsigned)ctx->r5, (unsigned)ctx->r6);
     std::lock_guard lock{ pak_mutex };
     Pak& pak = get_pak(pfs_port(rdram, ctx->r4));
     int file_no = (int)ctx->r5;
@@ -414,7 +408,6 @@ extern "C" void osPfsFileState_recomp(uint8_t* rdram, recomp_context* ctx) {
 
 // s32 osPfsFindFile(OSPfs* pfs, u16 company_code, u32 game_code, u8* game_name, u8* ext_name, s32* file_no)
 extern "C" void osPfsFindFile_recomp(uint8_t* rdram, recomp_context* ctx) {
-    fprintf(stderr, "TRACE %s %x %x %x\n", "osPfsFindFile", (unsigned)ctx->r4, (unsigned)ctx->r5, (unsigned)ctx->r6);
     std::lock_guard lock{ pak_mutex };
     Pak& pak = get_pak(pfs_port(rdram, ctx->r4));
     gpr ext_name = (gpr)(int32_t)MEM_W(0x10, ctx->r29);
@@ -431,7 +424,6 @@ extern "C" void osPfsFindFile_recomp(uint8_t* rdram, recomp_context* ctx) {
 // s32 osPfsAllocateFile(OSPfs* pfs, u16 company_code, u32 game_code, u8* game_name, u8* ext_name,
 //                       int file_size_in_bytes, s32* file_no)
 extern "C" void osPfsAllocateFile_recomp(uint8_t* rdram, recomp_context* ctx) {
-    fprintf(stderr, "TRACE %s %x %x %x\n", "osPfsAllocateFile", (unsigned)ctx->r4, (unsigned)ctx->r5, (unsigned)ctx->r6);
     std::lock_guard lock{ pak_mutex };
     int port = pfs_port(rdram, ctx->r4);
     Pak& pak = get_pak(port);
@@ -482,7 +474,6 @@ extern "C" void osPfsAllocateFile_recomp(uint8_t* rdram, recomp_context* ctx) {
 
 // s32 osPfsDeleteFile(OSPfs* pfs, u16 company_code, u32 game_code, u8* game_name, u8* ext_name)
 extern "C" void osPfsDeleteFile_recomp(uint8_t* rdram, recomp_context* ctx) {
-    fprintf(stderr, "TRACE %s %x %x %x\n", "osPfsDeleteFile", (unsigned)ctx->r4, (unsigned)ctx->r5, (unsigned)ctx->r6);
     std::lock_guard lock{ pak_mutex };
     int port = pfs_port(rdram, ctx->r4);
     Pak& pak = get_pak(port);
@@ -506,7 +497,6 @@ extern "C" void osPfsDeleteFile_recomp(uint8_t* rdram, recomp_context* ctx) {
 // s32 osPfsReadWriteFile(OSPfs* pfs, s32 file_no, u8 flag, int offset, int size_in_bytes, u8* data_buffer)
 // flag: 0 = PFS_READ, 1 = PFS_WRITE.
 extern "C" void osPfsReadWriteFile_recomp(uint8_t* rdram, recomp_context* ctx) {
-    fprintf(stderr, "TRACE %s %x %x %x\n", "osPfsReadWriteFile", (unsigned)ctx->r4, (unsigned)ctx->r5, (unsigned)ctx->r6);
     std::lock_guard lock{ pak_mutex };
     int port = pfs_port(rdram, ctx->r4);
     Pak& pak = get_pak(port);

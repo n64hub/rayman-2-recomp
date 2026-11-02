@@ -90,7 +90,10 @@ ultramodern::gfx_callbacks_t::gfx_data_t create_gfx() {
     return {};
 }
 
-// Rayman 2 is one player's: port 1 has a controller. Any pad or the keyboard plays it.
+// Rayman 2 is one player's: port 1 has a controller, any pad or the keyboard, with a pak in it. The game reads the
+// controllers' status for a pak before it opens its Controller Pak save (src/game/controller_pak.cpp), and with none
+// it waits on the save slots' screen for good. ultramodern reports a pak for any Pak but None, and RumblePak is the
+// only other it has.
 ultramodern::input::connected_device_info_t get_connected_device_info(int controller_num) {
     if (recompinput::players::is_single_player_mode() || recompinput::players::get_player_is_assigned(controller_num)) {
         if (controller_num == 0) {
@@ -522,9 +525,8 @@ int main(int argc, char** argv) {
         .get_rsp_microcode = get_rsp_microcode,
     };
 
-    // Skip Buffering, not Present Early: the game draws each frame in two RSP tasks, the background (its clears and a
-    // fill over the whole framebuffer) and then the world, and Present Early shows a framebuffer as soon as a task fills
-    // it, so the background alone came on screen between the world's frames.
+    // Skip Buffering: RT64 presents a framebuffer once the game swaps to it at a VI. Present Early, which shows one as
+    // soon as a task fills it, is untried with this game.
     ultramodern::renderer::callbacks_t renderer_callbacks{
         .create_render_context = [](uint8_t* rdram, ultramodern::renderer::WindowHandle window_handle, bool developer_mode) {
             return recompui::renderer::create_render_context(rdram, window_handle, ultramodern::renderer::PresentationMode::SkipBuffering, developer_mode);
