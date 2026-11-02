@@ -8,10 +8,10 @@ built from your ROM like the desktop program, so it is never built in CI and nev
 What is the game's own stays here: the `EMSCRIPTEN` branches of `CMakeLists.txt` that make the game a page,
 `tools/build_web.sh`, the prebuilt shader list (`src/rt64_shaders.txt`, recorded by `tools/shader_plan.json`; the
 list's header says how to record it again), the play plans (`tools/play_plan.json`, `tools/play_plan_extended.json`)
-and the survey they share (`tools/shader_survey.js`). The rest is N64Recomp-browser's: `docs/porting.md` (WebGPU and
-the shaders, prebuilt shader lists, Emscripten), `docs/playing.md` (playing and measuring a page), `docs/forks.md` and
-`docs/findings.md`. Every play of this game's page is a line in N64Recomp-browser's `plays.jsonl` (game `pm`), never a
-record here. The page is published at [n64hub.com/paper-mario](https://n64hub.com/paper-mario/).
+and the survey they share (`tools/survey.js`). The rest is N64Recomp-browser's: `docs/porting.md` (WebGPU and the
+shaders, prebuilt shader lists, Emscripten), `docs/playing.md` (playing and measuring a page), `docs/forks.md` and
+`docs/findings.md`. Every play of this game's page is a line in N64Recomp-browser's `plays.jsonl` (game `r2`), never a
+record here. The page is not published yet: the game is held unreleased until it plays further.
 
 ## Build it
 
@@ -21,63 +21,39 @@ On Linux with Docker, with the ROM at `roms/rayman2.us.z64`:
 tools/build_web.sh                  # [cpus] [cmake arguments]
 ```
 
-It builds `build/web/Rayman2Recompiled.html` with its `.js`, `.wasm` (about 21 MB) and `.data` (about 9 MB: the
+It builds `build/web/Rayman2Recompiled.html` with its `.js`, `.wasm` (about 11 MB) and `.data` (about 9 MB: the
 recomp's fonts and menus, nothing of the game) in `tools/docker/Dockerfile.web`, the image every N64Recomp-browser
-page is built in, with ccache in `build/ccache-web`, so a rebuild after a patch takes a minute or two. The script's
-header says each step. Three things differ from the desktop build:
+page is built in, with ccache in `build/ccache-web`, so a rebuild after a change takes a minute or two. The script's
+header says each step. Two things differ from the desktop build:
 
 - The patches library (`patches/`, built for MIPS) is recompiled by the native N64Recomp that `tools/recompile.sh`
   builds, not the runtime's, which Emscripten would build for the browser.
 - RT64 builds its pipelines from `src/rt64_shaders.txt` (`RT64_PREBUILT_SHADER_LIST`), in sections: the boot's before
-  the game starts, and an area's the first time it draws.
-- The heap grows (`-sALLOW_MEMORY_GROWTH`, up to 4 GB): the effects' TLB pages lie about 1.5 GB past RDRAM in it
-  (`src/game/recomp_api.cpp`), past the 1536 MB every page starts with, and the page aborts at boot without it.
+  the game starts, and a level's the first time it draws.
 
 Serve `build/web` over HTTP from localhost (any static server; the page brings its own `coi_serviceworker.js` for the
 headers threads need) and open `Rayman2Recompiled.html` in Chrome or Firefox with WebGPU, then Load ROM.
 
 ## The plans
 
-A plan reaches the title the way a player does, by the keyboard's defaults (Enter is Start, Space A, WASD the stick):
-Start through the logos and the intro story. From there `tools/shader_survey.js` takes the game where the plan needs
-it as the game's own code does, with no patch: the attract demo or the intro story, as the title's wait does when it
-runs out, and any map at any entrance once a game is under way, as an exit does (the map change mode written into
-game mode slot 0, the map found by its name in the game's own table of areas), at a point in the story it sets
-first. So a plan reaches any area with a new file, without a save, and goes as far whatever the browser. The survey's
-header has each function and address; the waits in the world are on the game's own frame count
-(`gGameStatus.frameCounter`, 30 a second).
+A plan reaches the intro story the way a player does, by the keyboard's defaults (Enter is Start, Space A, WASD the
+stick): Start Game, the logos and the attract demo, Start to the main menu, and A through New Game, a slot and a name.
+The intro story can't be skipped and runs about 100 s, so from there `tools/survey.js` changes level as the game's own
+exits do: it writes the next level's name where the engine reads it and asks for a change of level, and the game loads
+that level. So a plan reaches any level with a new game, without a save. The survey's header has the addresses, found
+by reading RDRAM as the game played (there is no decomp); the waits in a level are on the game's own clock, 60 a
+second of play.
 
-`tools/play_plan.json` (about 3 minutes) boots, shoots the title, watches the attract demo's first scenes and its
-first battle, starts a new file from file select, and walks Toad Town, its pause menu, and Koopa Village.
-`tools/play_plan_extended.json` (about 5 minutes) goes on to a map of each later chapter's area. Play them with
-N64Recomp-browser's `tools/play_page.mjs` (its `docs/playing.md`). `tools/play_plan_maps.json` (about 30 minutes) is
-a release's check, not a regular play: the survey's `sweep()` warps to every map of every area in turn, a few seconds
-each, and a trap or a map that doesn't come fails it.
+`tools/play_plan.json` (about 2.5 minutes) boots, shoots the menu, watches 15 s of the intro story, then plays the
+prison ship (jail_20) and walks about the Woods of Light (learn_10). `tools/play_plan_extended.json` (about 5
+minutes) goes on to five more levels. Play them with N64Recomp-browser's `tools/play_page.mjs` (its
+`docs/playing.md`).
 
 ## The shader list
 
-`src/rt64_shaders.txt` holds about 1800 shaders in 25 sections: the boot's, then the intro story, the attract demo, a
-new file's start, the pause menu, and one an area, each built the first time the area draws. It is recorded by code
-with `tools/shader_plan.json` (the list's header says what each section plays and how to record it again), and four
-lines at the top of `new_game`, which file select and a new file's first map draw in a window wider than 4:3, were
-added by hand from a play that missed them, as were the last lines of most areas' sections, from what
-`tools/play_plan_maps.json` missed in their maps. A play that misses a shader prints it (`play_page.mjs` counts the
-misses); add it to the section of the area it was missed in.
+`src/rt64_shaders.txt` holds the boot's shaders and a section a level of the game's table of levels, each built the
+first time the level draws. It is recorded by code with `tools/shader_plan.json` (the list's header says what each
+section plays and how to record it again). A play that misses a shader prints it (`play_page.mjs` counts the misses);
+add it to the section of the level it was missed in.
 
 ## How it plays
-
-In Chrome, uncapped, the regular plan plays with no shader missed and no WebGPU error: a median of about 240 presents
-a second in a 1256x645 window on a desktop GPU, and about 110 at 3840x2000 (the stand-in for a laptop's integrated
-graphics), both on a busy host, RT64 interpolating the game's frames to the display's rate. Its gaps of up to about
-half a second fall at map loads, where the game loads too. The page presents with Skip Buffering as the desktop build
-does (`src/main/main.cpp` says why: Present Early showed the background alone between the world's frames).
-
-Widescreen is the desktop's (`patches/widescreen.c`): the world, battles, a dark room's light and the pause menu's
-blurred world reach the window's sides.
-
-In Firefox the regular plan plays clean, no exception and no WebGPU error, at about 60 presents a second, in a
-1256x645 window and at 3840x2000 both. Firefox builds a section of the shader list in line with the device, and
-RT64's thread can wait 4-13 s for it in one list. The game steps its logic every other VI whatever its lists do, so
-it went on to the demo's next map in such a wait, and the page trapped or stopped drawing in 5 plays of 5. The web
-support sends no VI while the renderer is stalled like that (N64ModernRuntime's `ULTRAMODERN_VIS_WAIT_FOR_RENDERER`),
-and the game waits with it.
