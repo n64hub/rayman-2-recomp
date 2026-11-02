@@ -4,8 +4,8 @@
 # shaders, so that nothing draws with the ubershader, which integrated graphics can't afford (N64Recomp-browser's
 # docs/porting.md, Prebuilt shader lists).
 #
-# Recorded by code, not by playing: bash tools/record_shaders.sh (its header says how) runs N64Recomp-browser's
-# tools/record_shaders.mjs with tools/shader_plan.json, in a Chrome of its own for each section. Section 0 is the
+# Recorded by code, not by playing: node lib/N64Recomp-browser/tools/record_shaders.mjs tools/shader_plan.json build/web
+# roms/rayman2.us.z64 src/rt64_shaders.txt (its header says how), on tools/build_web.sh's page. Section 0 is the
 # launcher, the boot (the logos, the attract demo, the title), the main menu and a new game's slot and name, reached
 # with Start and A as a player does, and the intro story's first 10 s. Then the intro story (jail_10) for a minute, and
 # a section a level of the game's table of levels, each reached from the intro story by tools/survey.js's go(), as the
