@@ -13,3 +13,18 @@ use_absolute_symbols = true
 [patches]
 # libultra's internals (its exception handler, the managers' threads, the raw SI and PI access) are N64Recomp's own
 # ignored functions, by the names syms/ gives them: the runtime replaces what calls them.
+
+# Spins. The runtime runs one game thread at a time and switches only when the running one calls into it, where a
+# console's interrupts preempt any thread. The game waits for its controller thread (func_8008EF78, woken by the SI's
+# messages) to finish a Controller Pak request by spinning on that thread's state byte, 0x800C8D10, until it is 0
+# (func_8008EF6C reads it): each pass yields, or the controller thread never runs and the game freezes on the screen
+# after it reads the pak (the "Expansion Pak detected!" screen at boot).
+[[patches.hook]]
+func = "func_8008F344"
+before_vram = 0x8008F35C
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "func_800FADC8"
+before_vram = 0x800FB020
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"

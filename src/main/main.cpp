@@ -424,6 +424,7 @@ void reorder_texture_pack(recomp::mods::ModContext&) {
 }
 
 void install_crash_trace();
+void print_stacks_after(double seconds);
 
 int main(int argc, char** argv) {
     install_crash_trace();
@@ -436,6 +437,9 @@ int main(int argc, char** argv) {
         }
         else if (strcmp(argv[i], "--window") == 0 && i + 1 < argc) {
             sscanf(argv[++i], "%dx%d", &window_width, &window_height);
+        }
+        else if (strcmp(argv[i], "--stacks") == 0 && i + 1 < argc) {
+            print_stacks_after(atof(argv[++i]));
         }
     }
 
