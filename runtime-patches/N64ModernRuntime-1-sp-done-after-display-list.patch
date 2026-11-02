@@ -1,0 +1,21 @@
+--- a/ultramodern/src/events.cpp
++++ b/ultramodern/src/events.cpp
+@@ -599,7 +599,9 @@
+                 // start another graphics task until the RDP is also complete. Games usually preserve the RSP inputs until the RDP
+                 // is finished as well, so sending this early shouldn't be an issue in most cases.
+                 // If this causes issues then the logic can be replaced with responding to yield requests.
+-                sp_complete();
++                // Rayman 2 does not: it changes what a display list reads once the RSP says it is done, so on a slow
++                // renderer (lavapipe, a page on a busy host) RT64 read a list that was being rewritten and crashed,
++                // ran out of memory or lost the GBI. So the RSP is done once RT64 has read the list (send_dl).
+                 ultramodern::measure_input_latency();
+ 
+                 PTR(u64) displaylist = task_action->task.t.data_ptr;
+@@ -608,6 +610,7 @@
+                 [[maybe_unused]] auto renderer_start = std::chrono::high_resolution_clock::now();
+                 renderer_context->send_dl(&task_action->task);
+                 [[maybe_unused]] auto renderer_end = std::chrono::high_resolution_clock::now();
++                sp_complete();
+ 
+                 dp_complete();
+                 // TODO hook the parsed event up to the actual parsing point when a callback is added to RT64.

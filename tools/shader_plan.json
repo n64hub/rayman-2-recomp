@@ -10,9 +10,10 @@
   "Recorded by code, not by playing: bash tools/record_shaders.sh (its header says how) runs N64Recomp-browser's",
   "tools/record_shaders.mjs with tools/shader_plan.json, which loads the page fresh for each section. Section 0 is the",
   "launcher, the boot (the logos, the attract demo, the title), the main menu and a new game's slot and name, reached",
-  "with Start and A as a player does, and the intro story's first seconds. Then the intro story (jail_10) for a minute,",
-  "and a section a level of the game's table of levels, each reached from the intro story by tools/survey.js's go(), as",
-  "the game's own exits change level, and walked about for 15 s of the game's time. Not recorded: the levels past their",
+  "with Start and A as a player does (a load deletes the save a load before it made), and the intro story's first",
+  "seconds (a change of level asked for sooner aborts the page). Then the intro story (jail_10) for a minute, and a",
+  "section a level of the game's table of levels, each reached from the intro story by tools/survey.js's go(), as the",
+  "game's own exits change level, and walked about for 15 s of the game's time. Not recorded: the levels past their",
   "starts, the pause menu, the bosses' fights and the game's other cutscenes. Flags follow settings (filtering, HDR,",
   "MSAA, upscaling), so a change to one of those defaults means recording again."
  ],
@@ -39,6 +40,10 @@
   ]
  ],
  "start": [
+  [
+   "eval",
+   "(() => { try { FS.unlink('/home/web_user/.config/Rayman2Recompiled/saves/controllerpak_1.mpk'); return 'deleted'; } catch (e) { return 'none'; } })()"
+  ],
   [
    "click",
    627,
@@ -79,6 +84,18 @@
   [
    "eval",
    "r2.playing(\"jail_10\")"
+  ],
+  [
+   "clock",
+   "r2.clock()",
+   60
+  ],
+  [
+   "wait",
+   10000
+  ],
+  [
+   "clock"
   ]
  ],
  "sections": [
