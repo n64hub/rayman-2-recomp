@@ -59,7 +59,7 @@ windows)
     ;;
 linux)
     setup
-    image=pm-linux:$(sha256sum tools/docker/Dockerfile.linux | cut -c1-12)
+    image=rayman2-linux:$(sha256sum tools/docker/Dockerfile.linux | cut -c1-12)
     mkdir -p build/home build/ccache
     docker image inspect "$image" > /dev/null 2>&1 || docker build -t "$image" -f tools/docker/Dockerfile.linux tools/docker
     docker run --rm -u "$(id -u):$(id -g)" -v "$ROOT:/src" -w /src -e CCACHE_DIR=/src/build/ccache -e HOME=/src/build/home \

@@ -22,8 +22,8 @@ ROM_DERIVED_DIRS = ("roms/", "extracted/", "RecompiledFuncs/", "rsp/")
 ROM_MAGICS = (b"\x80\x37\x12\x40", b"\x37\x80\x40\x12", b"\x40\x12\x37\x80")
 # RDRAM dumps are 4 or 8 MB and ROMs larger. The launcher's fonts (assets/, RecompFrontend's Chiaro at up to 6 MB) are
 # the only tracked files near that size, so they are left out of the size check by their extension. So are the symbol
-# tables in syms/ (the data symbols' is about 28 MB): text generated from the decomp's ELF, each line a name and an
-# address, which the TOML check parses.
+# tables in syms/: text tools/gen_syms.py writes, each line a name, an address and a size, which the TOML check
+# parses.
 MAX_FILE_SIZE = 4 * 1024 * 1024
 FONT_EXTENSIONS = {".otf", ".ttf"}
 SYMBOL_TABLES = "syms/"

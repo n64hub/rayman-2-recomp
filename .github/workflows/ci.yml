@@ -1,8 +1,7 @@
 # Checks and builds, on Windows and Linux; nothing is deployed or released.
 # The ROM is user-supplied and never in git or CI, so RecompiledFuncs/ (generated from it) doesn't exist here: CI builds
 # every library and every object file of the program except the one that includes that output, and stops short of
-# linking. The patches need no ROM: they are compiled against lib/papermario's headers and recompiled with syms/, on
-# Linux.
+# linking. The patches need no ROM: they are compiled for MIPS and recompiled with syms/, on Linux.
 #
 # The submodules and the build directory are cached together, keyed on the runner image, the submodule commits and
 # runtime-patches/ (the configure applies it to them). On an exact hit ninja finds the libraries up to date (the cache
@@ -62,8 +61,8 @@ jobs:
             build
           key: ${{ steps.key.outputs.key }}
           restore-keys: ${{ steps.key.outputs.prefix }}
-      # Not the decomp (lib/papermario): only patches/ includes it, which the Linux job builds. In parallel, retried,
-      # and cleaned, as a cache restored by prefix holds the submodules as older patches left them.
+      # In parallel, retried, and cleaned, as a cache restored by prefix holds the submodules as older patches left
+      # them.
       - name: Submodules
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
@@ -158,15 +157,13 @@ jobs:
           key: ${{ steps.key.outputs.key }}
           restore-keys: ${{ steps.key.outputs.prefix }}
       # Retried: one transient "Empty reply from server" from a submodule host otherwise fails the whole build. A cache
-      # restored by prefix holds the submodules as older patches left them: clean them, nested submodules too. The
-      # decomp without its own submodules (splat and the asm tools, for building it): the patches need only its headers.
+      # restored by prefix holds the submodules as older patches left them: clean them, nested submodules too.
       - name: Submodules
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           for i in 1 2 3; do
             git -c protocol.version=2 submodule update --init --recursive --force --depth 1 --jobs 8 \
                 lib/N64ModernRuntime lib/N64Recomp-browser lib/RecompFrontend lib/rt64 &&
-              git -c protocol.version=2 submodule update --init --force --depth 1 lib/papermario &&
               git submodule foreach --recursive -q git clean -fdq &&
               git submodule foreach --recursive -q git reset -q --hard && exit 0
             echo "attempt $i failed"; sleep $((i * 15))

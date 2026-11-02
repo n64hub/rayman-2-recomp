@@ -12,7 +12,6 @@ use_absolute_symbols = true
 
 # The game's symbols, so that a patch resolves the functions and data it names.
 func_reference_syms_file = "syms/rayman2.us.syms.toml"
-data_reference_syms_files = [ "syms/rayman2.us.datasyms.toml" ]
 
 # Written by the recompiler rather than objcopy, so that it can patch the MIPS32 relocations.
 output_binary_path = "patches/patches.bin"
