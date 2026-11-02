@@ -96,7 +96,7 @@ ultramodern::input::connected_device_info_t get_connected_device_info(int contro
         if (controller_num == 0) {
             return ultramodern::input::connected_device_info_t{
                 .connected_device = ultramodern::input::Device::Controller,
-                .connected_pak = ultramodern::input::Pak::None,
+                .connected_pak = ultramodern::input::Pak::RumblePak,
             };
         }
     }
