@@ -54,6 +54,20 @@ func = "func_8008E944"
 before_vram = 0x8008EA74
 text = "{ void yield_self(uint8_t*); static int32_t last = -1; while (MEM_W(0, (gpr)(int32_t)0x800C8C3C) == last) yield_self(rdram); last = MEM_W(0, (gpr)(int32_t)0x800C8C3C); MEM_W(0, (gpr)(int32_t)0x800C8C40) = last; }"
 
+# The sound engine's queue of calls (func_800B273C adds a function and its argument to the array at 0x800DFED4, counted
+# in 0x800DFECC) has room for 0x800DFED0's count, 250, and never checks it. A synthesizer player (func_800B2794) runs
+# and empties it as each audio frame is made, but it is filled at each retrace too: func_800B3338 adds the stop of
+# each voice that has finished, every retrace until the stop runs. The scheduler starts no audio task while the RSP
+# has a graphics task, which in the runtime lasts until RT64 has read its list, so a list that takes long to read (on
+# lavapipe, RT64 building a pipeline on the CPU) makes no audio frames, and after about 84 retraces the queue runs past
+# its end into the voice table the heap put after it (0x800DFEA8). The next retrace calls a voice argument there as a
+# function: "Failed to find function at 0x8019B...". A console's audio never waits that long. So an addition that
+# finds the queue full is dropped: those stops are added again each retrace until the queue has run.
+[[patches.hook]]
+func = "func_800B273C"
+before_vram = 0x800B273C
+text = "if (MEM_W(0, (gpr)(int32_t)0x800DFECC) >= MEM_W(0, (gpr)(int32_t)0x800DFED0)) { ctx->r2 = 1; return; }"
+
 # The idle thread (func_800004C0, once it has started the game's threads) is a watchdog: it waits for the main thread's
 # OSThread state to read 1, libultra's OS_STATE_STOPPED, and then breaks. The runtime keeps its own states in that
 # field, where 1 is QUEUED, so it would break while the game runs. The runtime has no idle thread to stand in for, so
