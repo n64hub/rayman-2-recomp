@@ -41,6 +41,19 @@ func = "func_8008FAF8"
 before_vram = 0x8008FB1C
 text = "{ void yield_self(uint8_t*); if (ctx->r3 != ctx->r2) yield_self(rdram); }"
 
+# One frame a VI at most. The game's scheduler thread (func_8008F5C0) counts each retrace in 0x800C8C3C, and as a frame
+# starts func_8008E944 copies that count to 0x800C8C40, which keys the frame's cache of texture loads: a texture's load
+# block is written into the list once a frame, its address and the frame's count kept in the texture (+0x8, +0xC), and
+# a later draw of it in the same count only calls that block (func_8009CEDC). There is one display list buffer, so a
+# frame that starts in the same VI as the one before calls blocks that frame wrote where its own commands now go: a
+# console's CPU never builds two frames in one VI, the recomp's does in well under a millisecond. Such a call can land
+# on itself, which RT64 follows until the page runs out of memory. So a frame that would start in the VI before's count
+# waits for the next retrace, as each pass yields.
+[[patches.hook]]
+func = "func_8008E944"
+before_vram = 0x8008EA74
+text = "{ void yield_self(uint8_t*); static int32_t last = -1; while (MEM_W(0, (gpr)(int32_t)0x800C8C3C) == last) yield_self(rdram); last = MEM_W(0, (gpr)(int32_t)0x800C8C3C); MEM_W(0, (gpr)(int32_t)0x800C8C40) = last; }"
+
 # The idle thread (func_800004C0, once it has started the game's threads) is a watchdog: it waits for the main thread's
 # OSThread state to read 1, libultra's OS_STATE_STOPPED, and then breaks. The runtime keeps its own states in that
 # field, where 1 is QUEUED, so it would break while the game runs. The runtime has no idle thread to stand in for, so

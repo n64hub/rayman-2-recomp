@@ -27,7 +27,7 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   documented there; `tools/build_n64recomp.sh` and `CMakeLists.txt` apply its `patches/` to the other three, and
   `CMakeLists.txt` then this game's own changes to them (`runtime-patches/`, its README lists them).
 - `docs/web.md`: the web page: `tools/build_web.sh`, its prebuilt shader list (`src/rt64_shaders.txt`,
-  `tools/shader_plan.json`, `tools/record_shaders.sh`) and its play plans (`tools/play_plan*.json`).
+  `tools/shader_plan.json`) and its play plans (`tools/play_plan*.json`).
 - Comments beside the code, for how and why: each file's header. Read the header of the file you change and update
   it in the same commit.
 
@@ -63,8 +63,13 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
 - **The RSP's done message.** ultramodern tells a game a graphics task's RSP work is done as RT64 starts it, which
   holds for games that keep a list's inputs until the RDP is done too. This one changes them once the RSP is done, so
   `runtime-patches/` sends the message once RT64 has read the list. Without it a slow renderer (lavapipe, a page on a
-  busy host) read lists being rewritten: a crash in `RT64::Interpreter::processDisplayLists`, "Unable to find a
-  matching GBI", or the page's Aborted(OOM).
+  busy host) read lists being rewritten: a crash in `RT64::Interpreter::processDisplayLists` or "Unable to find a
+  matching GBI".
+- **One frame a VI.** The game keys its cache of texture loads by the retrace count a frame starts in, and has one
+  display list buffer, so it takes for granted that no two frames start in one VI: a console's CPU never builds them
+  that fast. The recomp's does, and such a frame calls the load blocks the frame before wrote, where its own commands
+  now go: textures from the wrong place, or a call to itself that RT64 follows until the page ends with Aborted(OOM).
+  A hook in `us.toml` holds a frame that would start in the same count until the next retrace.
 - **Microcodes.** Graphics: F3DEX.NoN 1.23, which RT64 knows. Audio: `aspMain` (libultra's ABI 1), recompiled by
   RSPRecomp from `aspMain.us.toml`. librecomp's vector unit uses SSE4.1, so `RecompiledFuncs` builds with
   `-march=nehalem` on x86-64.

@@ -7,4 +7,4 @@ file per submodule, `<submodule>-<n>-<what>.patch`, numbered after that submodul
 - `N64ModernRuntime-1-sp-done-after-display-list.patch`: ultramodern tells the game a graphics task's RSP work is
   done once RT64 has read its display list, not as the task starts. The game changes what a list reads as soon as
   the RSP is done, so with the early message a slow renderer (lavapipe, a page on a busy host) read a list being
-  rewritten: RT64 crashed reading it, the page ran out of memory, or RT64 found no GBI for the task.
+  rewritten: RT64 crashed reading it, or found no GBI for the task.
