@@ -57,3 +57,13 @@ section plays and how to record it again). A play that misses a shader prints it
 add it to the section of the level it was missed in.
 
 ## How it plays
+
+By the regular plan on a desktop GPU, uncapped at 3840x2000 on an idle host, Chrome presents 354 a second (the
+display's 360 holds it, not the page), its longest frame gap 23 ms, with no shader waits, no misses and no WebGPU
+errors; Firefox builds each level's section with the game waiting (half a second or so) and plays with no misses or
+errors, its longest gaps (0.3-0.7 s) as a level changes. Its runs are in N64Recomp-browser's `plays.jsonl` (`r2`).
+
+A second new game in one browser, after a reload of a page that had reached the intro story, stops 0.8 s into the
+intro with `Aborted(OOM)`: RT64 runs a display list whose calls never end. A new browser, or a reload before any new
+game, plays, and so does every first boot; it is filed in N64Recomp-browser's work, and is why
+`tools/record_shaders.sh` records each section in a Chrome of its own.
