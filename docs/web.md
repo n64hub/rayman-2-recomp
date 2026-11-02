@@ -46,15 +46,17 @@ second of play.
 
 `tools/play_plan.json` (about 2.5 minutes) boots, shoots the menu, watches 25 s of the intro story, then plays the
 prison ship (jail_20) and walks about the Woods of Light (learn_10). `tools/play_plan_extended.json` (about 5
-minutes) goes on to five more levels. Play them with N64Recomp-browser's `tools/play_page.mjs` (its
-`docs/playing.md`).
+minutes) goes on to five more levels. `tools/play_plan_levels.json` (about 10 minutes, a release's check) visits
+every level of the game's table in turn, with a shot of each, and goes on past a level that doesn't play, so one play
+shows every level that fails. Play them with N64Recomp-browser's `tools/play_page.mjs` (its `docs/playing.md`).
 
 ## The shader list
 
 `src/rt64_shaders.txt` holds the boot's shaders and a section a level of the game's table of levels, each built the
 first time the level draws. It is recorded by code with `tools/shader_plan.json` (the list's header says what each
 section plays and how to record it again). A play that misses a shader prints it (`play_page.mjs` counts the misses);
-add it to the section of the level it was missed in.
+add it to the section of the level it was missed in, or, for a screen any level shows (the pause menu), to the plan's
+last section, pause, which goes into the boot's.
 
 ## How it plays
 

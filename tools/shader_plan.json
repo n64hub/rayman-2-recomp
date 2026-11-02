@@ -12,9 +12,12 @@
   "launcher, the boot (the logos, the attract demo, the title), the main menu and a new game's slot and name, reached",
   "with Start and A as a player does, and the intro story's first 10 s. Then the intro story (jail_10) for a minute, and",
   "a section a level of the game's table of levels, each reached from the intro story by tools/survey.js's go(), as the",
-  "game's own exits change level, and walked about for 15 s of the game's time. Not recorded: the levels past their",
-  "starts, the pause menu, the bosses' fights and the game's other cutscenes. Flags follow settings (filtering, HDR,",
-  "MSAA, upscaling), so a change to one of those defaults means recording again."
+  "game's own exits change level, and walked about for 15 s of the game's time. The plan's last section, pause, goes",
+  "into section 0: the pause menu (its Load and Options too), which comes up in any level and asks for its shaders a few",
+  "at once, fewer than a section's build waits for, paused in learn_10, and the world map's (mapmonde) prompt to save",
+  "the game and its answer. Not recorded: the levels past their starts, the bosses' fights and the game's other",
+  "cutscenes. Flags follow settings (filtering, HDR, MSAA, upscaling), so a change to one of those defaults means",
+  "recording again."
  ],
  "load": [
   [
@@ -4400,6 +4403,206 @@
     ],
     [
      "clock"
+    ]
+   ]
+  },
+  {
+   "name": "pause",
+   "boot": true,
+   "steps": [
+    [
+     "keep",
+     false
+    ],
+    [
+     "eval",
+     "r2.go(\"learn_10\", 60000)"
+    ],
+    [
+     "clock",
+     "r2.clock()",
+     60
+    ],
+    [
+     "wait",
+     3000
+    ],
+    [
+     "hold",
+     "KeyW",
+     "w",
+     87,
+     2000
+    ],
+    [
+     "keep",
+     true
+    ],
+    [
+     "hold",
+     "Enter",
+     "Enter",
+     13,
+     150
+    ],
+    [
+     "wait",
+     2500
+    ],
+    [
+     "hold",
+     "KeyS",
+     "s",
+     83,
+     200
+    ],
+    [
+     "wait",
+     800
+    ],
+    [
+     "hold",
+     "Space",
+     " ",
+     32,
+     150
+    ],
+    [
+     "wait",
+     2500
+    ],
+    [
+     "hold",
+     "ShiftLeft",
+     "Shift",
+     16,
+     150
+    ],
+    [
+     "wait",
+     1500
+    ],
+    [
+     "hold",
+     "KeyS",
+     "s",
+     83,
+     200
+    ],
+    [
+     "wait",
+     800
+    ],
+    [
+     "hold",
+     "Space",
+     " ",
+     32,
+     150
+    ],
+    [
+     "wait",
+     2500
+    ],
+    [
+     "hold",
+     "KeyS",
+     "s",
+     83,
+     200
+    ],
+    [
+     "wait",
+     800
+    ],
+    [
+     "hold",
+     "Space",
+     " ",
+     32,
+     150
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "hold",
+     "ShiftLeft",
+     "Shift",
+     16,
+     150
+    ],
+    [
+     "wait",
+     1500
+    ],
+    [
+     "hold",
+     "ShiftLeft",
+     "Shift",
+     16,
+     150
+    ],
+    [
+     "wait",
+     1500
+    ],
+    [
+     "keep",
+     false
+    ],
+    [
+     "hold",
+     "Enter",
+     "Enter",
+     13,
+     150
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "clock"
+    ],
+    [
+     "eval",
+     "r2.go(\"mapmonde\", 60000)"
+    ],
+    [
+     "keep",
+     true
+    ],
+    [
+     "wait",
+     3000
+    ],
+    [
+     "hold",
+     "Space",
+     " ",
+     32,
+     150
+    ],
+    [
+     "wait",
+     3000
+    ],
+    [
+     "keep",
+     false
+    ],
+    [
+     "hold",
+     "Space",
+     " ",
+     32,
+     150
+    ],
+    [
+     "wait",
+     2000
     ]
    ]
   }
