@@ -27,7 +27,7 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   documented there; `tools/build_n64recomp.sh` and `CMakeLists.txt` apply its `patches/` to the other three, and
   `CMakeLists.txt` then this game's own changes to them (`runtime-patches/`, its README lists them).
 - `docs/web.md`: the web page: `tools/build_web.sh`, its prebuilt shader list (`src/rt64_shaders.txt`,
-  `tools/shader_plan.json`, `tools/record_shaders.sh`) and its play plans (`tools/play_plan*.json`).
+  `tools/shader_plan.json`) and its play plans (`tools/play_plan*.json`).
 - Comments beside the code, for how and why: each file's header. Read the header of the file you change and update
   it in the same commit.
 
