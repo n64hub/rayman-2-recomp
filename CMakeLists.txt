@@ -186,6 +186,7 @@ target_sources(Rayman2Recompiled PRIVATE
     ${CMAKE_SOURCE_DIR}/src/main/crash_trace.cpp
     ${CMAKE_SOURCE_DIR}/src/main/register_overlays.cpp
     ${CMAKE_SOURCE_DIR}/src/game/config.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/controller_pak.cpp
     ${CMAKE_SOURCE_DIR}/src/game/libultra.cpp
     ${CMAKE_SOURCE_DIR}/src/game/recomp_api.cpp
 )

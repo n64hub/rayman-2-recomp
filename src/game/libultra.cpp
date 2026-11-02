@@ -26,17 +26,21 @@ extern "C" void __osEnqueueThread_recomp(uint8_t* rdram, recomp_context* ctx) {
 }
 
 // The Controller Pak's bank and RAM, for the game's own copies of libultra's page functions (__osPfsDeclearPage,
-// __osPfsReleasePages): the runtime's osPfs* answer that no Pak is there (PFS_ERR_NOPACK), so these answer the same.
+// __osPfsReleasePages). Only its osPfsAllocateFile and osPfsDeleteFile call those, and src/game/controller_pak.cpp
+// replaces both, so the calls never come; were one to, it would find no Pak (PFS_ERR_NOPACK).
 constexpr int32_t PFS_ERR_NOPACK = 1;
 
 extern "C" void __osPfsSelectBank_recomp(uint8_t* rdram, recomp_context* ctx) {
+    fprintf(stderr, "TRACE __osPfsSelectBank\n");
     ctx->r2 = PFS_ERR_NOPACK;
 }
 
 extern "C" void __osContRamRead_recomp(uint8_t* rdram, recomp_context* ctx) {
+    fprintf(stderr, "TRACE __osContRamRead\n");
     ctx->r2 = PFS_ERR_NOPACK;
 }
 
 extern "C" void __osContRamWrite_recomp(uint8_t* rdram, recomp_context* ctx) {
+    fprintf(stderr, "TRACE __osContRamWrite\n");
     ctx->r2 = PFS_ERR_NOPACK;
 }
