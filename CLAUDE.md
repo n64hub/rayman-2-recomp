@@ -90,10 +90,12 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   menu's swirl, while 0x800C87D0 is set) is an opaque gradient at 4:3 over the frame's clear, a fill of the level's
   fog colour that RT64 widens to the window's edges, so a hook in `us.toml` clears black under it: without it the
   sides show the level's colour. `src/game/widescreen.cpp` widens what the game decides for a 4:3 screen: its culling
-  planes, its full-screen fades, that backdrop's gradient and the scene transition it blacks out from the CPU (which
-  needs `RT64_STRETCH_CPU_CHANGES`, set in `CMakeLists.txt`), none of them at Original. It also joins the title logo's
-  overlapping tiles at every aspect, each tile's clear edge given its neighbour's texels, which upscaled showed their
-  seams.
+  planes, its sprites and particles (projected on the CPU to texture rectangles and clipped to the screen, drawn past
+  it with RT64's extended GBI under a scissor `RT64_SCISSOR_INSIDE_FRAMEBUFFER` counts only to the frame's edges), its
+  full-screen fades, that backdrop's gradient and the scene transition it blacks out from the CPU (which needs
+  `RT64_STRETCH_CPU_CHANGES`), none of them at Original; `CMakeLists.txt` sets both options. It also joins the title
+  logo's overlapping tiles at every aspect, each tile's clear edge given its neighbour's texels, which upscaled showed
+  their seams.
 - **Interpolation.** The game moves some things only on its own frames, which RT64 moves on every frame drawn: its
   texture scrolls (the intro's sky, the language menu's water), masked tiles stepped a texel on some frames and not
   others (rt64-web 08427aa), and its menu cursor, a butterfly whose vertices the CPU places anew each frame with no

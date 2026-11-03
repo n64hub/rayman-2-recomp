@@ -99,6 +99,14 @@ func = "func_8009784C"
 before_vram = 0x800981FC
 text = "{ void r2_fix_rect(uint8_t*, gpr, gpr); r2_fix_rect(rdram, ctx->r17, ctx->r5); }"
 
+# The sprites' clip to the screen, func_800976E0, which the 2D drawer (func_8009784C) draws one through: at its start
+# src/game/widescreen.cpp draws one that reaches past a 4:3 screen's edges out to the wide picture's (none at Original)
+# and returns the list's end, and the game's own clip runs for the rest.
+[[patches.hook]]
+func = "func_800976E0"
+before_vram = 0x800976E0
+text = "{ int r2_wide_sprite(uint8_t*, recomp_context*); if (r2_wide_sprite(rdram, ctx)) return; }"
+
 # The scene transition's thread, func_8008EF78, blacks out a pass of the shown framebuffer (a0) at 0x8008F07C, its map
 # in a3, the pass's level in a1 and the loop's count in v1. src/game/widescreen.cpp does the pass for a wide picture
 # and leaves the loop nothing to do (none at Original).
