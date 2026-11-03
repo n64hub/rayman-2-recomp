@@ -60,6 +60,10 @@ set(RT64_SDL_WINDOW_VULKAN TRUE)
 # The scene transition is drawn from the CPU, and RT64 stretches what the CPU writes across a wide picture, which
 # src/game/widescreen.cpp writes squeezed in by as much.
 set(RT64_STRETCH_CPU_CHANGES TRUE)
+# A sprite past the 4:3 edges is drawn under an extended scissor that reaches the window's edges
+# (src/game/widescreen.cpp), far past the framebuffer's own: RT64_SCISSOR_INSIDE_FRAMEBUFFER, on with Emscripten and
+# here too, counts it only to the frame's edges, so the 3D of a frame with one is still widened.
+set(RT64_SCISSOR_INSIDE_FRAMEBUFFER ON)
 add_compile_definitions(HLSL_CPU)
 
 if (WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")

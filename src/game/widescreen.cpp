@@ -1,8 +1,8 @@
 // Widescreen for what the game decides and draws for a 4:3 screen, which RT64's Aspect Ratio Expand (or Manual) widens
 // the picture past: its culling (us.toml's hook in func_8009989C), its full-screen 2D rectangles (the hook in
-// func_8009784C), a menu's backdrop (the hooks in func_80098D58) and its scene transition, drawn from the CPU (the hook
-// in func_8008EF78), each left alone at Original. The 2D rectangles' hook also joins a big image's tiles, which show
-// their seams upscaled at any aspect.
+// func_8009784C), a menu's backdrop (the hooks in func_80098D58), its sprites' clip to the screen (the hook in
+// func_800976E0) and its scene transition, drawn from the CPU (the hook in func_8008EF78), each left alone at Original.
+// The 2D rectangles' hook also joins a big image's tiles, which show their seams upscaled at any aspect.
 
 #include <algorithm>
 #include <cmath>
@@ -349,6 +349,93 @@ extern "C" void r2_widen_backdrop(uint8_t* rdram) {
         MEM_H(i * 0x10, backdrop_vertices) = backdrop_written_x[i];
         backdrop_widened[i] = true;
     }
+}
+
+// The sprites and particles (a lum's glow, the sparkles as Rayman lands): func_80092768 projects one on the CPU to a
+// texture rectangle on the screen, and func_800976E0 (us.toml's hook at its start calls this) clips it to the 4:3
+// screen before the 2D drawer, func_8009784C, writes it. RT64 draws such a rectangle where the 3D around it is, at its
+// place in the wide picture's 4:3 middle, so a sprite was cut on a straight line at the 4:3 edges and one wholly past
+// them was never drawn. A rectangle that reaches past them is clipped here to the wide picture's edges instead, and
+// drawn with RT64's extended GBI: its texture rectangle as an extended one, whose left can be below 0 (G_TEXRECT's
+// can't), under a scissor that reaches the window's edges, pushed before it and popped after, so nothing else draws
+// under it. Returns whether this did (v0 then the list's end); otherwise the game's own clip runs, at Original and for
+// a rectangle inside the screen. The rectangle is +0x0 x, +0x4 y, +0x8 right, +0xC bottom in quarter pixels, its
+// texture coordinates at +0x14 and +0x18 and their steps per pixel at +0x1C and +0x20 (words); the screen's height is
+// at +0x14 and its width at +0x1C (pixels). The extended commands are rt64_extended_gbi.h's, for its opcode 0x64
+// (gEXEnable registers it).
+extern "C" void func_8009784C(uint8_t* rdram, recomp_context* ctx);
+
+static constexpr uint32_t ex_command(uint32_t id) {
+    return (0x64u << 24) | id;
+}
+static constexpr uint32_t ex_origin_none = 0x800;
+
+extern "C" int r2_wide_sprite(uint8_t* rdram, recomp_context* ctx) {
+    const gpr list = ctx->r4, rect = ctx->r5, screen = ctx->r7;
+    const int32_t width = MEM_W(0x1C, screen) * 4, height = MEM_W(0x14, screen) * 4;
+    int32_t x0 = MEM_W(0x0, rect), y0 = MEM_W(0x4, rect), x1 = MEM_W(0x8, rect), y1 = MEM_W(0xC, rect);
+    const float k = widescreen_scale();
+    if (k <= 1.0f || (x0 >= 0 && x1 <= width)) {
+        return 0;
+    }
+    // Rounded in, so the scissor never reaches past the picture.
+    const int32_t left = -(int32_t)std::floor((k - 1.0f) * width * 0.5f), right = width - left;
+    if (x1 <= left || y1 <= 0 || x0 > right || y0 > height) {
+        ctx->r2 = list;
+        return 1;
+    }
+    if (x0 < left) {
+        MEM_W(0x14, rect) = MEM_W(0x14, rect) + (((left - x0) * MEM_W(0x1C, rect)) >> 7);
+        MEM_W(0x0, rect) = x0 = left;
+    }
+    if (y0 < 0) {
+        MEM_W(0x18, rect) = MEM_W(0x18, rect) + ((-y0 * MEM_W(0x20, rect)) >> 7);
+        MEM_W(0x4, rect) = y0 = 0;
+    }
+    if (x1 > right) {
+        MEM_W(0x8, rect) = x1 = right;
+    }
+    if (y1 > height) {
+        MEM_W(0xC, rect) = y1 = height;
+    }
+
+    gpr at = list;
+    auto write = [&](uint32_t w0, uint32_t w1) {
+        MEM_W(0, at) = (int32_t)w0;
+        MEM_W(4, at) = (int32_t)w1;
+        at += 8;
+    };
+    write(0x00525464u, (1u << 28) | 0x64u); // gEXEnable
+    write(ex_command(0x17), 0); // gEXPushScissor
+    write(ex_command(0x05), (ex_origin_none << 2) | (ex_origin_none << 14)); // gEXSetScissor, G_SC_NON_INTERLACE
+    write(((uint32_t)left & 0xFFFF) << 16, (((uint32_t)right & 0xFFFF) << 16) | ((uint32_t)height & 0xFFFF));
+
+    ctx->r4 = at;
+    func_8009784C(rdram, ctx);
+    const gpr end = ctx->r2;
+
+    // The texture rectangle it wrote (G_TEXRECT, then G_RDPHALF_1 with its coordinates and G_RDPHALF_2 with their
+    // steps) as gEXTextureRectangle, at the rectangle's place as the drawer left it.
+    for (gpr command = at; command + 24 <= end; command += 8) {
+        if (((uint32_t)MEM_W(0, command) >> 24) != 0xE4 || ((uint32_t)MEM_W(8, command) >> 24) != 0xB4 ||
+            ((uint32_t)MEM_W(16, command) >> 24) != 0xB3) {
+            continue;
+        }
+        const uint32_t tile = ((uint32_t)MEM_W(4, command) >> 24) & 7;
+        const int32_t coords = MEM_W(12, command), steps = MEM_W(20, command);
+        x0 = MEM_W(0x0, rect), y0 = MEM_W(0x4, rect), x1 = MEM_W(0x8, rect), y1 = MEM_W(0xC, rect);
+        MEM_W(0, command) = (int32_t)ex_command(0x02);
+        MEM_W(4, command) = (int32_t)(tile | (ex_origin_none << 3) | (ex_origin_none << 15));
+        MEM_W(8, command) = (int32_t)((((uint32_t)x0 & 0xFFFF) << 16) | ((uint32_t)y0 & 0xFFFF));
+        MEM_W(12, command) = (int32_t)((((uint32_t)x1 & 0xFFFF) << 16) | ((uint32_t)y1 & 0xFFFF));
+        MEM_W(16, command) = coords;
+        MEM_W(20, command) = steps;
+        break;
+    }
+    at = end;
+    write(ex_command(0x18), 0); // gEXPopScissor
+    ctx->r2 = at;
+    return 1;
 }
 
 // The 4:3 column that a picture's column x of width shows once RT64 stretches it k times across the wide picture:
