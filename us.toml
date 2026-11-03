@@ -90,13 +90,14 @@ func = "func_8009989C"
 before_vram = 0x80099DF8
 text = "{ void r2_widen_cull_planes(uint8_t*, gpr); r2_widen_cull_planes(rdram, ctx->r16); }"
 
-# The 2D drawer, func_8009784C, writes a scaled texture rectangle from its rectangle struct (s1) at 0x800981FC, where
-# src/game/widescreen.cpp makes a full-screen one (the fades) span the screen so RT64 stretches it across a wide picture,
-# and keeps texture coordinates that run out to a tile's edge (the title logo's tiles) inside it.
+# The 2D drawer, func_8009784C, writes a scaled texture rectangle's command (at a1) from its rectangle struct (s1) at
+# 0x800981FC, where src/game/widescreen.cpp makes a full-screen one (the fades) span the screen so RT64 stretches it
+# across a wide picture, and keeps the tiles of a big image (the title logo's) from overlapping and their texture
+# coordinates inside the tile.
 [[patches.hook]]
 func = "func_8009784C"
 before_vram = 0x800981FC
-text = "{ void r2_fix_rect(uint8_t*, gpr); r2_fix_rect(rdram, ctx->r17); }"
+text = "{ void r2_fix_rect(uint8_t*, gpr, gpr); r2_fix_rect(rdram, ctx->r17, ctx->r5); }"
 
 # The scene transition's thread, func_8008EF78, blacks out a pass of the shown framebuffer (a0) at 0x8008F07C, its map
 # in a3, the pass's level in a1 and the loop's count in v1. src/game/widescreen.cpp does the pass for a wide picture

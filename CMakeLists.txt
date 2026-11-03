@@ -57,6 +57,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 set(RT64_STATIC TRUE)
 set(RT64_SDL_WINDOW_VULKAN TRUE)
+# The scene transition is drawn from the CPU, and RT64 stretches what the CPU writes across a wide picture, which
+# src/game/widescreen.cpp writes squeezed in by as much.
+set(RT64_STRETCH_CPU_CHANGES TRUE)
 add_compile_definitions(HLSL_CPU)
 
 if (WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")

@@ -89,7 +89,10 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   Display; RT64 widens the 3D. Original (Aspect Ratio Original) is the console's 4:3. A menu's backdrop (the pause
   menu's swirl, while 0x800C87D0 is set) is an opaque gradient at 4:3 over the frame's clear, a fill of the level's
   fog colour that RT64 widens to the window's edges, so a hook in `us.toml` clears black under it: without it the
-  sides show the level's colour.
+  sides show the level's colour. `src/game/widescreen.cpp` widens what the game decides for a 4:3 screen: its culling
+  planes, its full-screen fades, that backdrop's gradient and the scene transition it blacks out from the CPU (which
+  needs `RT64_STRETCH_CPU_CHANGES`, set in `CMakeLists.txt`), none of them at Original. It also joins the title logo's
+  overlapping tiles at every aspect, which upscaled showed their seams.
 - **Testing.** `--boot` starts the game from the launcher's first frame once the ROM is stored, `--window <w>x<h>`
   sizes the window, `--input <file>` plays port 1 from a script of timed button states (`main.cpp` says the format),
   and on Windows `--stacks <seconds>` prints every thread's stack that long after start, for unattended runs and

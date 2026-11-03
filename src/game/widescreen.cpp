@@ -1,6 +1,8 @@
 // Widescreen for what the game decides and draws for a 4:3 screen, which RT64's Aspect Ratio Expand (or Manual) widens
-// the picture past: its culling (us.toml's hook in func_8009989C), its 2D rectangles (the hook in func_8009784C) and its
-// scene transition, drawn from the CPU (the hook in func_8008EF78). Each is left alone at Original.
+// the picture past: its culling (us.toml's hook in func_8009989C), its full-screen 2D rectangles (the hook in
+// func_8009784C), a menu's backdrop (the hooks in func_80098D58) and its scene transition, drawn from the CPU (the hook
+// in func_8008EF78), each left alone at Original. The 2D rectangles' hook also joins a big image's tiles, which show
+// their seams upscaled at any aspect.
 
 #include <algorithm>
 #include <cmath>
@@ -73,9 +75,8 @@ extern "C" void r2_widen_cull_planes(uint8_t* rdram, gpr camera) {
 
 // Keeps a scaled rectangle's texture coordinates inside its texture. RT64 puts a texel's centre on its whole coordinate,
 // so coordinates that run out to a power-of-two edge (32.0 for a 32-texel tile) blend the last texel half and half with
-// the one the texture wraps around to. The game draws big images (the title logo) as overlapping 32x32 tiles whose edge
-// rows and columns do that, and upscaled they show as a grid of thin dark lines. An end within a texel of such an edge is
-// pulled in to the last texel's centre: the tile squeezes by under a texel, inside the overlap its neighbour covers.
+// the one the texture wraps around to, and upscaled a big image drawn as tiles that do that (the title logo) showed a
+// grid of thin dark lines. An end within a texel of such an edge is pulled in to the last texel's centre.
 static void keep_inside_texture(uint8_t* rdram, gpr rect, int length, int coord_offset, int step_offset) {
     int16_t coord = (int16_t)MEM_HU(coord_offset, rect), step = (int16_t)MEM_HU(step_offset, rect);
     if (length <= 0 || step == 0 || step == 1024 || step == -1024) {
@@ -100,13 +101,97 @@ static void keep_inside_texture(uint8_t* rdram, gpr rect, int length, int coord_
     MEM_H(step_offset, rect) = (int16_t)std::lround((end - start) / (length / 4.0f) * 1024.0f);
 }
 
-// The 2D drawer's scaled texture rectangles (us.toml's hook in func_8009784C calls this before one is written). A
-// rectangle over the whole screen (the fades) is drawn from 0 to a pixel short of its right and bottom edges, and RT64
-// stretches a rectangle across a wide picture only when it spans the screen, so a fade covered only the 4:3 middle:
-// it is made to span it. The rectangle is +0x0 x, +0x4 y, +0x8 right, +0xC bottom in quarter pixels, its texture
-// coordinates at +0x16 and +0x1A (S10.5) and their steps per pixel at +0x1E and +0x22 (S5.10).
-extern "C" void r2_fix_rect(uint8_t* rdram, gpr rect) {
-    const int32_t screen_width = MEM_W(0, (gpr)(int32_t)0x8001A110) * 4, screen_height = MEM_W(0, (gpr)(int32_t)0x8001A114) * 4;
+// The title logo's tiles are 32x32 textures whose outermost ring of texels is clear (its mask, the alpha, is 0 there),
+// drawn overlapping by a couple of pixels so that one tile's edge fades out as the next one's fades in. At a console's
+// few pixels that hides the joins, but upscaled the two fading edges, drawn over each other, cover less than one solid
+// texel (a thin dark line), and as the logo fades they add up (a lighter one). So each tile in a row or column of them
+// meets the one before at a single place, both of them solid there: the one before ends there at its last solid texel
+// (its step stretched by a percent or two) and this one starts there at its first. The one before is already in the
+// frame's list (the list is sent once it is done), so its command is changed there: the first word holds its right
+// and bottom edges and the sixth its steps. The rectangles drawn this frame are kept, the frame told by the count
+// func_8008E944 keeps at 0x800C8C40.
+
+// A tile's last solid texel at a side whose coordinate is within a texel of its start (0, so 1) or of a power-of-two
+// edge (so the edge less 2), or NAN where it is no tile's side.
+static float solid_texel(float coord) {
+    if (coord >= -0.01f && coord <= 1.0f) {
+        return 1.5f;
+    }
+    for (float edge = 8.0f; edge <= 1024.0f; edge *= 2.0f) {
+        if (coord >= edge - 1.0f && coord <= edge + 0.01f) {
+            return edge - 1.5f;
+        }
+    }
+    return NAN;
+}
+
+static float rect_coord(uint8_t* rdram, gpr rect, int offset) {
+    return (int16_t)MEM_HU(offset, rect) / 32.0f;
+}
+
+static float rect_step(uint8_t* rdram, gpr rect, int offset) {
+    return (int16_t)MEM_HU(offset, rect) / 1024.0f;
+}
+
+struct DrawnRect {
+    gpr command;
+    int32_t x0, y0, x1, y1; // as the game gave them, to tell its rows and columns
+    int32_t start[2], end[2]; // as drawn, across and down
+    float coord[2], step[2];
+    float end_solid[2]; // solid_texel() at its right and bottom
+};
+static DrawnRect drawn_rects[64];
+static int drawn_rect_count = 0;
+static int32_t drawn_rects_frame = -1;
+
+static uint32_t rect_edges_word(const DrawnRect& rect) {
+    return 0xE4000000u | ((uint32_t)(rect.end[0] & 0xFFF) << 12) | (uint32_t)(rect.end[1] & 0xFFF);
+}
+
+static uint32_t rect_steps_word(const DrawnRect& rect) {
+    return ((uint32_t)(uint16_t)(int16_t)std::lround(rect.step[0] * 1024.0f) << 16) |
+        (uint32_t)(uint16_t)(int16_t)std::lround(rect.step[1] * 1024.0f);
+}
+
+// Joins a rectangle that starts at start (quarter pixels) on axis, its texture coordinate there coord and its step per
+// pixel step, to before, which it overlaps there: returns where it starts now, and sets coord to its coordinate there.
+static int32_t join_tiles(uint8_t* rdram, DrawnRect& before, int axis, int32_t start, int32_t end, float& coord,
+    float step) {
+    const float solid = solid_texel(coord), before_solid = before.end_solid[axis];
+    if (std::isnan(solid) || std::isnan(before_solid) || step == 0.0f || before.step[axis] == 0.0f) {
+        return start;
+    }
+    if ((uint32_t)MEM_W(0x0, before.command) != rect_edges_word(before) ||
+        (uint32_t)MEM_W(0x14, before.command) != rect_steps_word(before)) {
+        return start;
+    }
+    // Where each reaches its solid texel as drawn, and the join on the whole pixel halfway between.
+    const float before_at = before.start[axis] + (before_solid - before.coord[axis]) / before.step[axis] * 4.0f;
+    const float at = start + (solid - coord) / step * 4.0f;
+    const int32_t join = std::clamp<int32_t>(std::lround((before_at + at) * 0.125f) * 4,
+        std::max(start, before.start[axis] + 4), std::min(before.end[axis], end - 4));
+    const float before_step = (before_solid - before.coord[axis]) / ((join - before.start[axis]) / 4.0f);
+    if (before_step / before.step[axis] < 0.95f || before_step / before.step[axis] > 1.05f ||
+        std::abs(solid - (coord + (join - start) / 4.0f * step)) > 1.5f) {
+        return start;
+    }
+    before.end[axis] = join;
+    before.step[axis] = before_step;
+    MEM_W(0x0, before.command) = (int32_t)rect_edges_word(before);
+    MEM_W(0x14, before.command) = (int32_t)rect_steps_word(before);
+    coord = solid;
+    return join;
+}
+
+// The 2D drawer's scaled texture rectangles (us.toml's hook in func_8009784C calls this before one is written, to
+// command). A rectangle over the whole screen (the fades) is drawn from 0 to a pixel short of its right and bottom
+// edges, and RT64 stretches a rectangle across a wide picture only when it spans the screen, so a fade covered only the
+// 4:3 middle: it is made to span it. A big image's tiles are joined (above) and kept inside their textures. The
+// rectangle is +0x0 x, +0x4 y, +0x8 right, +0xC bottom in quarter pixels, its texture coordinates at +0x16 and +0x1A
+// (S10.5) and their steps per pixel at +0x1E and +0x22 (S5.10).
+extern "C" void r2_fix_rect(uint8_t* rdram, gpr rect, gpr command) {
+    const int32_t screen_width = MEM_W(0, (gpr)(int32_t)0x8001A110) * 4;
+    const int32_t screen_height = MEM_W(0, (gpr)(int32_t)0x8001A114) * 4;
     int32_t x0 = MEM_W(0x0, rect), y0 = MEM_W(0x4, rect), x1 = MEM_W(0x8, rect), y1 = MEM_W(0xC, rect);
     if (x0 <= 0 && x1 >= screen_width - 4 && x1 < screen_width && y0 <= 0 && y1 >= screen_height - 4) {
         MEM_W(0x8, rect) = x1 = screen_width;
@@ -114,8 +199,46 @@ extern "C" void r2_fix_rect(uint8_t* rdram, gpr rect) {
             MEM_W(0xC, rect) = y1 = screen_height;
         }
     }
-    keep_inside_texture(rdram, rect, x1 - x0, 0x16, 0x1E);
-    keep_inside_texture(rdram, rect, y1 - y0, 0x1A, 0x22);
+
+    const int32_t frame = MEM_W(0, (gpr)(int32_t)0x800C8C40);
+    if (frame != drawn_rects_frame || (drawn_rect_count > 0 && command <= drawn_rects[drawn_rect_count - 1].command)) {
+        drawn_rects_frame = frame;
+        drawn_rect_count = 0;
+    }
+    float s = rect_coord(rdram, rect, 0x16), t = rect_coord(rdram, rect, 0x1A);
+    const float ds = rect_step(rdram, rect, 0x1E), dt = rect_step(rdram, rect, 0x22);
+    DrawnRect drawn = { command, x0, y0, x1, y1, { x0, y0 }, { x1, y1 }, {}, {},
+        { solid_texel(s + (x1 - x0) / 4.0f * ds), solid_texel(t + (y1 - y0) / 4.0f * dt) } };
+    int32_t start_x = x0, start_y = y0;
+    for (int i = 0; i < drawn_rect_count; i++) {
+        DrawnRect& before = drawn_rects[i];
+        if (before.y0 == y0 && before.y1 == y1 && before.x0 < x0 && x0 < before.x1 && before.x1 < x1) {
+            start_x = join_tiles(rdram, before, 0, start_x, x1, s, ds);
+        }
+        else if (before.x0 == x0 && before.x1 == x1 && before.y0 < y0 && y0 < before.y1 && before.y1 < y1) {
+            start_y = join_tiles(rdram, before, 1, start_y, y1, t, dt);
+        }
+    }
+    if (start_x != x0) {
+        MEM_W(0x0, rect) = start_x;
+        MEM_H(0x16, rect) = (int16_t)std::lround(s * 32.0f);
+    }
+    if (start_y != y0) {
+        MEM_W(0x4, rect) = start_y;
+        MEM_H(0x1A, rect) = (int16_t)std::lround(t * 32.0f);
+    }
+
+    keep_inside_texture(rdram, rect, x1 - start_x, 0x16, 0x1E);
+    keep_inside_texture(rdram, rect, y1 - start_y, 0x1A, 0x22);
+    if (drawn_rect_count < 64) {
+        drawn.start[0] = start_x;
+        drawn.start[1] = start_y;
+        drawn.coord[0] = rect_coord(rdram, rect, 0x16);
+        drawn.coord[1] = rect_coord(rdram, rect, 0x1A);
+        drawn.step[0] = rect_step(rdram, rect, 0x1E);
+        drawn.step[1] = rect_step(rdram, rect, 0x22);
+        drawn_rects[drawn_rect_count++] = drawn;
+    }
 }
 
 // A menu's backdrop (the pause menu's): func_80098D58 animates the colours of a gradient, a mesh of 5 by 6 vertices at
