@@ -99,6 +99,9 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   others (rt64-web 08427aa), and its menu cursor, a butterfly whose vertices the CPU places anew each frame with no
   matrix ID (rt64-web a03baa2). The butterfly's light flickering between two levels is the game's own: vertex
   colours it writes, no RSP light, the same at Original.
+- **The intro's white fade.** As "Ubi Soft presents" fades out, the intro story cuts to white and its next shot of the
+  sea comes up through a white fog in about 0.6 s, "PRESENTS" still fading over it. That is the game's own: a PAL
+  console's capture shows it, and so does the desktop build at Framerate Original and Aspect Ratio Original.
 - **Testing.** `--boot` starts the game from the launcher's first frame once the ROM is stored, `--window <w>x<h>`
   sizes the window, `--input <file>` plays port 1 from a script of timed button states (`main.cpp` says the format),
   and on Windows `--stacks <seconds>` prints every thread's stack that long after start, for unattended runs and
