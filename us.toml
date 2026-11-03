@@ -80,6 +80,46 @@ func = "func_8008DC44"
 before_vram = 0x8008DE30
 text = "if (MEM_BU(0, (gpr)(int32_t)0x800C87D0) != 0) ctx->r3 = 1;"
 
+# Widescreen culling. func_8009989C sets a camera up for a frame: its fields of view (+0x64 across, +0x68 up), its
+# projection (guPerspective) and the four planes at +0x98 that the game tests what it draws against, built for 4:3.
+# RT64 widens the 3D to the window but the game left out whatever was past those planes, so in a wide picture objects
+# and pieces of the level popped in and out at its sides. Every camera mode joins at 0x80099DF8 with the planes
+# written, where src/game/widescreen.cpp widens the left and right ones as RT64 widens the picture (none at Original).
+[[patches.hook]]
+func = "func_8009989C"
+before_vram = 0x80099DF8
+text = "{ void r2_widen_cull_planes(uint8_t*, gpr); r2_widen_cull_planes(rdram, ctx->r16); }"
+
+# The 2D drawer, func_8009784C, writes a scaled texture rectangle's command (at a1) from its rectangle struct (s1) at
+# 0x800981FC, where src/game/widescreen.cpp makes a full-screen one (the fades) span the screen so RT64 stretches it
+# across a wide picture, and keeps the tiles of a big image (the title logo's) from overlapping and their texture
+# coordinates inside the tile.
+[[patches.hook]]
+func = "func_8009784C"
+before_vram = 0x800981FC
+text = "{ void r2_fix_rect(uint8_t*, gpr, gpr); r2_fix_rect(rdram, ctx->r17, ctx->r5); }"
+
+# The scene transition's thread, func_8008EF78, blacks out a pass of the shown framebuffer (a0) at 0x8008F07C, its map
+# in a3, the pass's level in a1 and the loop's count in v1. src/game/widescreen.cpp does the pass for a wide picture
+# and leaves the loop nothing to do (none at Original).
+[[patches.hook]]
+func = "func_8008EF78"
+before_vram = 0x8008F07C
+text = "{ gpr r2_wipe_pass(uint8_t*, gpr, gpr, gpr, gpr); ctx->r3 = r2_wipe_pass(rdram, ctx->r7, ctx->r4, ctx->r5, ctx->r3); }"
+
+# A menu's backdrop gradient: func_80098D58 makes each vertex's colour from its place (its x read into v0 at 0x80098EB8,
+# the vertex in t0) and then writes the display list that draws them, at 0x80098FE8. src/game/widescreen.cpp spreads
+# them across a wide picture there (none at Original) and gives the colours the x they had.
+[[patches.hook]]
+func = "func_80098D58"
+before_vram = 0x80098EB8
+text = "{ gpr r2_backdrop_x(uint8_t*, gpr, gpr); ctx->r2 = r2_backdrop_x(rdram, ctx->r8, ctx->r2); }"
+
+[[patches.hook]]
+func = "func_80098D58"
+before_vram = 0x80098FE8
+text = "{ void r2_widen_backdrop(uint8_t*); r2_widen_backdrop(rdram); }"
+
 # The idle thread (func_800004C0, once it has started the game's threads) is a watchdog: it waits for the main thread's
 # OSThread state to read 1, libultra's OS_STATE_STOPPED, and then breaks. The runtime keeps its own states in that
 # field, where 1 is QUEUED, so it would break while the game runs. The runtime has no idle thread to stand in for, so
