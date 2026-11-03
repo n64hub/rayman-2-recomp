@@ -11,7 +11,7 @@ list's header says how to record it again), the play plans (`tools/play_plan.jso
 and the survey they share (`tools/survey.js`). The rest is N64Recomp-browser's: `docs/porting.md` (WebGPU and the
 shaders, prebuilt shader lists, Emscripten), `docs/playing.md` (playing and measuring a page), `docs/forks.md` and
 `docs/findings.md`. Every play of this game's page is a line in N64Recomp-browser's `plays.jsonl` (game `r2`), never a
-record here. The page is not published yet: the game is held unreleased until it plays further.
+record here. The page is published at [n64hub.com/rayman-2](https://n64hub.com/rayman-2/).
 
 ## Build it
 
