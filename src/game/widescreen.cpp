@@ -1,7 +1,8 @@
 // Widescreen for what the game decides and draws for a 4:3 screen, which RT64's Aspect Ratio Expand (or Manual) widens
 // the picture past: its culling (us.toml's hook in func_8009989C), its full-screen 2D rectangles (the hook in
 // func_8009784C), a menu's backdrop (the hooks in func_80098D58), its sprites' clip to the screen (the hook in
-// func_800976E0) and its scene transition, drawn from the CPU (the hook in func_8008EF78), each left alone at Original.
+// func_800976E0), its scene transition, drawn from the CPU (the hook in func_8008EF78), and its HUD, placed at a 4:3
+// screen's corners (the hooks in func_800BC53C and the sprites' and text's drawers), each left alone at Original.
 // The 2D rectangles' hook also joins a big image's tiles, which show their seams upscaled at any aspect.
 
 #include <algorithm>
@@ -436,6 +437,161 @@ extern "C" int r2_wide_sprite(uint8_t* rdram, recomp_context* ctx) {
     write(ex_command(0x18), 0); // gEXPopScissor
     ctx->r2 = at;
     return 1;
+}
+
+// The HUD: func_800BC53C draws it each frame, its bars (health, air) and then its icons (Rayman's face, the lums' and
+// cages' icons, the column of hints at the right, a race's timer) through func_800BC460, and then the text on screen
+// through func_800C2844 (the counters beside those icons, a dialogue, the intro's story). Each bar and icon is a sprite
+// that func_80096EAC places in percent of a 4:3 screen and draws with the 2D drawer, func_8009784C, so in a wide
+// picture the HUD sat at the 4:3 corners. With RT64's extended GBI each one is drawn from the wide picture's edge
+// instead, as far from it as it was from the 4:3 screen's: one in the top half that starts in the screen's left third
+// and ends left of its right third from the left edge, one that ends in the right third and starts right of the left
+// third from the right edge (offset back by the screen's width), under a scissor that reaches the picture's edges, and
+// the alignment and scissor put back after it. A dialogue's speaker (Murfy's face) is an icon too, in the bottom left
+// beside the dialogue's box, which stays in the middle, and so does it. Text moves only with an icon it sits beside and on
+// its side of the screen, so a counter goes with its icon and everything else (a dialogue, the story, a countdown)
+// stays in the middle: a text entry (func_800C2F48 draws one, a sprite a letter) is given room for those commands
+// before it, filled in once its letters say where it is. us.toml's hooks call these, none at Original.
+struct HudRect {
+    float x0, y0, x1, y1; // percent of the screen
+    uint32_t origin;
+};
+static constexpr uint32_t ex_origin_left = 0x0, ex_origin_right = 0x400;
+static constexpr gpr display_list_end = (gpr)(int32_t)0x800C8C2C;
+static constexpr int hud_align_commands = 6;
+static bool hud_pass = false, hud_icons = false, hud_sprite_aligned = false;
+static HudRect hud_anchored[32];
+static int hud_anchored_count = 0;
+static gpr hud_text_room = 0;
+static HudRect hud_text;
+
+// Writes, from at, the commands that draw what follows from origin under a scissor out to the picture's edges; returns
+// where they end.
+static gpr write_hud_align(uint8_t* rdram, gpr at, uint32_t origin) {
+    const int32_t width = MEM_W(0, (gpr)(int32_t)0x8001A110) * 4, height = MEM_W(0, (gpr)(int32_t)0x8001A114) * 4;
+    // Rounded in, so the scissor never reaches past the picture.
+    const int32_t left = -(int32_t)std::floor((widescreen_scale() - 1.0f) * width * 0.5f), right = width - left;
+    const int32_t offset = origin == ex_origin_right ? -width : 0;
+    auto write = [&](uint32_t w0, uint32_t w1) {
+        MEM_W(0, at) = (int32_t)w0;
+        MEM_W(4, at) = (int32_t)w1;
+        at += 8;
+    };
+    write(0x00525464u, (1u << 28) | 0x64u); // gEXEnable
+    write(ex_command(0x17), 0); // gEXPushScissor
+    write(ex_command(0x05), (ex_origin_none << 2) | (ex_origin_none << 14)); // gEXSetScissor, G_SC_NON_INTERLACE
+    write(((uint32_t)left & 0xFFFF) << 16, (((uint32_t)right & 0xFFFF) << 16) | ((uint32_t)height & 0xFFFF));
+    write(ex_command(0x06), origin | (origin << 12)); // gEXSetRectAlign
+    write(((uint32_t)offset & 0xFFFF) << 16, ((uint32_t)offset & 0xFFFF) << 16);
+    return at;
+}
+
+// Writes, from at, the commands that put the alignment and the scissor back; returns where they end.
+static gpr write_hud_unalign(uint8_t* rdram, gpr at) {
+    MEM_W(0, at) = (int32_t)ex_command(0x06); // gEXSetRectAlign
+    MEM_W(4, at) = (int32_t)(ex_origin_none | (ex_origin_none << 12));
+    MEM_W(8, at) = 0;
+    MEM_W(12, at) = 0;
+    MEM_W(16, at) = (int32_t)ex_command(0x18); // gEXPopScissor
+    MEM_W(20, at) = 0;
+    return at + 24;
+}
+
+extern "C" void r2_hud_start() {
+    hud_pass = hud_icons = widescreen_scale() > 1.0f;
+    hud_anchored_count = 0;
+}
+
+extern "C" void r2_hud_icons_end() {
+    hud_icons = false;
+}
+
+extern "C" void r2_hud_end() {
+    hud_pass = hud_icons = false;
+    hud_anchored_count = 0;
+}
+
+// Before func_80096EAC has the 2D drawer write a sprite at list (its rectangle in quarter pixels as r2_fix_rect's, the
+// screen's width at +0x1C and its height at +0x14 in pixels): returns where the drawer writes it.
+extern "C" gpr r2_hud_sprite(uint8_t* rdram, gpr list, gpr rect, gpr screen) {
+    if (!hud_pass) {
+        return list;
+    }
+    const float width = MEM_W(0x1C, screen) * 4 / 100.0f, height = MEM_W(0x14, screen) * 4 / 100.0f;
+    if (width <= 0.0f || height <= 0.0f) {
+        return list;
+    }
+    HudRect sprite = { MEM_W(0x0, rect) / width, MEM_W(0x4, rect) / height, MEM_W(0x8, rect) / width,
+        MEM_W(0xC, rect) / height, ex_origin_none };
+    if (hud_text_room != 0) {
+        hud_text.x0 = std::min(hud_text.x0, sprite.x0);
+        hud_text.y0 = std::min(hud_text.y0, sprite.y0);
+        hud_text.x1 = std::max(hud_text.x1, sprite.x1);
+        hud_text.y1 = std::max(hud_text.y1, sprite.y1);
+        return list;
+    }
+    if (!hud_icons) {
+        return list;
+    }
+    if (sprite.x0 < 100.0f / 3.0f && sprite.x1 < 200.0f / 3.0f && sprite.y1 <= 50.0f) {
+        sprite.origin = ex_origin_left;
+    }
+    else if (sprite.x1 > 200.0f / 3.0f && sprite.x0 > 100.0f / 3.0f) {
+        sprite.origin = ex_origin_right;
+    }
+    else {
+        return list;
+    }
+    if (hud_anchored_count < 32) {
+        hud_anchored[hud_anchored_count++] = sprite;
+    }
+    hud_sprite_aligned = true;
+    return write_hud_align(rdram, list, sprite.origin);
+}
+
+// After it, the list's end in end: returns it past the commands that put the alignment back.
+extern "C" gpr r2_hud_sprite_end(uint8_t* rdram, gpr end) {
+    if (!hud_sprite_aligned) {
+        return end;
+    }
+    hud_sprite_aligned = false;
+    return write_hud_unalign(rdram, end);
+}
+
+// Before func_800C2844 has func_800C2F48 draw a text entry, once some icon has moved: leaves room in the list (the
+// list's end is at 0x800C8C2C) for the alignment's commands, G_SPNOOPs until the entry's letters are drawn.
+extern "C" void r2_hud_text_start(uint8_t* rdram) {
+    hud_text_room = 0;
+    if (!hud_pass || hud_anchored_count == 0) {
+        return;
+    }
+    hud_text_room = (gpr)MEM_W(0, display_list_end);
+    for (int i = 0; i < hud_align_commands * 2; i++) {
+        MEM_W(i * 4, hud_text_room) = 0;
+    }
+    MEM_W(0, display_list_end) = (int32_t)(hud_text_room + hud_align_commands * 8);
+    hud_text = { 1e9f, 1e9f, -1e9f, -1e9f, ex_origin_none };
+}
+
+// After it: an entry beside a moved icon (within 6% of the screen's width across and 3% of its height down) and wholly
+// on its half of the screen moves with it.
+extern "C" void r2_hud_text_end(uint8_t* rdram) {
+    const gpr room = hud_text_room;
+    hud_text_room = 0;
+    if (room == 0 || hud_text.x0 > hud_text.x1) {
+        return;
+    }
+    for (int i = 0; i < hud_anchored_count; i++) {
+        const HudRect& icon = hud_anchored[i];
+        const bool side = icon.origin == ex_origin_left ? hud_text.x1 < 50.0f : hud_text.x0 > 50.0f;
+        if (side && hud_text.x0 - 6.0f < icon.x1 && icon.x0 < hud_text.x1 + 6.0f && hud_text.y0 - 3.0f < icon.y1 &&
+            icon.y0 < hud_text.y1 + 3.0f) {
+            write_hud_align(rdram, room, icon.origin);
+            const gpr end = (gpr)MEM_W(0, display_list_end);
+            MEM_W(0, display_list_end) = (int32_t)write_hud_unalign(rdram, end);
+            return;
+        }
+    }
 }
 
 // The 4:3 column that a picture's column x of width shows once RT64 stretches it k times across the wide picture:
