@@ -5,7 +5,9 @@
   "regular play because it visits every level: the extended plan's start to the intro story, then each level of the game's",
   "table of levels (tools/shader_plan.json's sections) in turn by tools/survey.js's go(), as the game's own exits change",
   "level, with a shot of each 3 s in and a short walk and jump. A level the game doesn't play within 45 s is logged",
-  "([survey] not playing) and the plan goes on, so one play shows every level that fails."
+  "([survey] not playing) and the plan goes on, so one play shows every level that fails.",
+  "The menu shot is 3 s into the menu on that clock too, which stands still while Firefox builds the shader list's boot",
+  "section as the menu first draws, the game waiting: 3 s of the browser's time there can shoot that wait's black."
  ],
  "load": [
   [
@@ -58,12 +60,20 @@
    40000
   ],
   [
+   "clock",
+   "r2.clock()",
+   60
+  ],
+  [
    "wait",
    3000
   ],
   [
    "shot",
    "menu.png"
+  ],
+  [
+   "clock"
   ],
   [
    "pressUntil",

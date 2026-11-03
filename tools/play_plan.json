@@ -9,7 +9,9 @@
   "fails the run unless the game plays that level): the prison ship (jail_20), A through its first lines, and the Woods",
   "of Light (learn_10), walked and jumped about for 40 s. tools/play_plan_extended.json goes on to five more levels, for",
   "when a longer play is needed. Its waits and holds are on the game's own clock (survey.js's clock(), 60 a second of",
-  "play)."
+  "play).",
+  "The menu shot is 3 s into the menu on that clock too, which stands still while Firefox builds the shader list's boot",
+  "section as the menu first draws, the game waiting: 3 s of the browser's time there can shoot that wait's black."
  ],
  "load": [
   [
@@ -62,12 +64,20 @@
    40000
   ],
   [
+   "clock",
+   "r2.clock()",
+   60
+  ],
+  [
    "wait",
    3000
   ],
   [
    "shot",
    "menu.png"
+  ],
+  [
+   "clock"
   ],
   [
    "pressUntil",
