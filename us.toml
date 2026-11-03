@@ -80,6 +80,16 @@ func = "func_8008DC44"
 before_vram = 0x8008DE30
 text = "if (MEM_BU(0, (gpr)(int32_t)0x800C87D0) != 0) ctx->r3 = 1;"
 
+# Widescreen culling. func_8009989C sets a camera up for a frame: its fields of view (+0x64 across, +0x68 up), its
+# projection (guPerspective) and the four planes at +0x98 that the game tests what it draws against, built for 4:3.
+# RT64 widens the 3D to the window but the game left out whatever was past those planes, so in a wide picture objects
+# and pieces of the level popped in and out at its sides. Every camera mode joins at 0x80099DF8 with the planes
+# written, where src/game/widescreen.cpp widens the left and right ones as RT64 widens the picture (none at Original).
+[[patches.hook]]
+func = "func_8009989C"
+before_vram = 0x80099DF8
+text = "{ void r2_widen_cull_planes(uint8_t*, gpr); r2_widen_cull_planes(rdram, ctx->r16); }"
+
 # The idle thread (func_800004C0, once it has started the game's threads) is a watchdog: it waits for the main thread's
 # OSThread state to read 1, libultra's OS_STATE_STOPPED, and then breaks. The runtime keeps its own states in that
 # field, where 1 is QUEUED, so it would break while the game runs. The runtime has no idle thread to stand in for, so

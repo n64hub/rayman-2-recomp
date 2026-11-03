@@ -189,6 +189,7 @@ target_sources(Rayman2Recompiled PRIVATE
     ${CMAKE_SOURCE_DIR}/src/game/controller_pak.cpp
     ${CMAKE_SOURCE_DIR}/src/game/libultra.cpp
     ${CMAKE_SOURCE_DIR}/src/game/recomp_api.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/widescreen.cpp
 )
 if (R2_PATCHES)
     target_sources(Rayman2Recompiled PRIVATE ${CMAKE_SOURCE_DIR}/src/main/register_patches.cpp)
