@@ -19,7 +19,8 @@ docker run --rm -u "$(id -u):$(id -g)" -v "$ROOT:/src" -w /src -e CCACHE_DIR=/sr
     git config --global --add safe.directory '*'
     bash tools/recompile.sh -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
     # The ports CMake finds and ninja depends on, in the image's own cache, which goes with the container (seconds).
-    embuilder build sdl2-mt freetype-legacysjlj > /dev/null 2>&1
+    # They are downloaded from GitHub each time, so a failed download is said, not left as a build that stops silently.
+    embuilder build sdl2-mt freetype-legacysjlj > build/embuilder.log 2>&1 || { tail -20 build/embuilder.log; exit 1; }
     [ -f build/web/build.ninja ] || emcmake cmake -S . -B build/web -G Ninja -DCMAKE_BUILD_TYPE=Release $* > build/web-configure.log 2>&1 ||
         { tail -20 build/web-configure.log; rm -f build/web/build.ninja; exit 1; }
     ninja -C build/web -j$CPUS Rayman2Recompiled > build/web-build.log 2>&1 ||
