@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22168a"/><stop offset="0.55" stop-color="#4a1f86"/><stop offset="1" stop-color="#2a0f3a"/></linearGradient>
+<radialGradient id="lumglow"><stop offset="0" stop-color="#fff4b0" stop-opacity="1"/><stop offset="0.3" stop-color="#ffd23a" stop-opacity="0.7"/><stop offset="1" stop-color="#ffb000" stop-opacity="0"/></radialGradient>
+<radialGradient id="lum" cx="0.4" cy="0.35"><stop offset="0" stop-color="#ffffff"/><stop offset="0.5" stop-color="#ffe55a"/><stop offset="1" stop-color="#ffa800"/></radialGradient>
+<linearGradient id="mist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a7cff" stop-opacity="0"/><stop offset="1" stop-color="#9a7cff" stop-opacity="0.35"/></linearGradient>
+<clipPath id="tile"><rect x="8" y="8" width="240" height="240" rx="44"/></clipPath>
+</defs>
+<g clip-path="url(#tile)">
+<rect width="256" height="256" fill="url(#sky)"/>
+<rect x="18" y="0" width="22" height="256" fill="#1a0d3a"/><rect x="70" y="0" width="16" height="256" fill="#24124a"/><rect x="196" y="0" width="26" height="256" fill="#1a0d3a"/><rect x="232" y="0" width="14" height="256" fill="#24124a"/><rect x="150" y="0" width="12" height="256" fill="#2c1658"/><ellipse cx="30" cy="10" rx="70" ry="40" fill="#120a2c"/><ellipse cx="226" cy="6" rx="80" ry="44" fill="#120a2c"/><ellipse cx="128" cy="-10" rx="70" ry="30" fill="#170c36"/>
+<rect x="0" y="150" width="256" height="106" fill="url(#mist)"/>
+<path d="M -10 230 Q 60 200 128 222 T 266 214 L 266 266 L -10 266 Z" fill="#160a2c"/>
+<path d="M 40 196 C 70 150, 92 168, 116 134" stroke="#ffe27a" stroke-width="3" fill="none" opacity="0.5" stroke-dasharray="2 7" stroke-linecap="round"/>
+<circle cx="134" cy="118" r="80" fill="url(#lumglow)"/>
+<path d="M 116 112 C 92 84, 70 96, 80 116 C 88 128, 106 124, 116 120 Z" fill="#fff6d0" opacity="0.85"/>
+<path d="M 152 112 C 176 84, 198 96, 188 116 C 180 128, 162 124, 152 120 Z" fill="#fff6d0" opacity="0.85"/>
+<circle cx="134" cy="118" r="26" fill="url(#lum)"/>
+<polygon points="67.0,70.0 61.4,71.4 60.0,77.0 58.6,71.4 53.0,70.0 58.6,68.6 60.0,63.0 61.4,68.6" fill="#fff"/>
+<polygon points="209.0,160.0 201.8,161.8 200.0,169.0 198.2,161.8 191.0,160.0 198.2,158.2 200.0,151.0 201.8,158.2" fill="#fff" opacity="0.9"/>
+</g>
+<rect x="8" y="8" width="240" height="240" rx="44" fill="none" stroke="#120a2c" stroke-width="4"/>
+</svg>
