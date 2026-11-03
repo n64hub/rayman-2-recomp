@@ -75,8 +75,9 @@ extern "C" void r2_widen_cull_planes(uint8_t* rdram, gpr camera) {
 
 // Keeps a scaled rectangle's texture coordinates inside its texture. RT64 puts a texel's centre on its whole coordinate,
 // so coordinates that run out to a power-of-two edge (32.0 for a 32-texel tile) blend the last texel half and half with
-// the one the texture wraps around to, and upscaled a big image drawn as tiles that do that (the title logo) showed a
-// grid of thin dark lines. An end within a texel of such an edge is pulled in to the last texel's centre.
+// the one the texture wraps around to, and upscaled a big image drawn as tiles that do that showed a grid of thin dark
+// lines (the title logo's tiles are joined below instead). An end within a texel of such an edge is pulled in to the
+// last texel's centre.
 static void keep_inside_texture(uint8_t* rdram, gpr rect, int length, int coord_offset, int step_offset) {
     int16_t coord = (int16_t)MEM_HU(coord_offset, rect), step = (int16_t)MEM_HU(step_offset, rect);
     if (length <= 0 || step == 0 || step == 1024 || step == -1024) {
@@ -101,29 +102,20 @@ static void keep_inside_texture(uint8_t* rdram, gpr rect, int length, int coord_
     MEM_H(step_offset, rect) = (int16_t)std::lround((end - start) / (length / 4.0f) * 1024.0f);
 }
 
-// The title logo's tiles are 32x32 textures whose outermost ring of texels is clear (its mask, the alpha, is 0 there),
-// drawn overlapping by a couple of pixels so that one tile's edge fades out as the next one's fades in. At a console's
-// few pixels that hides the joins, but upscaled the two fading edges, drawn over each other, cover less than one solid
-// texel (a thin dark line), and as the logo fades they add up (a lighter one). So each tile in a row or column of them
-// meets the one before at a single place, both of them solid there: the one before ends there at its last solid texel
-// (its step stretched by a percent or two) and this one starts there at its first. The one before is already in the
-// frame's list (the list is sent once it is done), so its command is changed there: the first word holds its right
-// and bottom edges and the sixth its steps. The rectangles drawn this frame are kept, the frame told by the count
+// The title logo is a big image drawn as 32x32 tiles, each two textures: its colour (tile 0, RGBA16) and its mask (tile
+// 1, I4, the alpha). A tile holds 30x30 texels of the image inside a ring of clear ones, and the game draws the tiles
+// overlapping by a couple of pixels so that one tile's edge fades out as the next one's fades in. At a console's few
+// pixels that hides the joins, but upscaled the two fading edges, drawn over each other, cover less than a solid texel
+// (a thin dark line), and as the logo fades they add up (a lighter one). The image runs on from one tile's last texel
+// inside the ring to the next one's first, so where two tiles meet each one's ring there is given the other's texels
+// beside it, and RT64's filtering reads across the join as it does inside the image. Both keep the game's own
+// coordinates and steps, and they meet at a single whole pixel, so nothing is drawn twice, where each reads only its
+// own texture: RT64 puts a texel's centre on its whole coordinate less the tile's upper left (0.5 here), so a tile reads
+// coordinates 0.5 to 31.5 without wrapping around to its far side. A side that meets no tile is cut back to there too,
+// since past it the filtering reads the ring on the far side, which may hold a neighbour's texels. The one before is
+// already in the frame's list (the list is sent once it is done), so its command is changed there: the first word
+// holds its right and bottom edges. The rectangles drawn this frame are kept, the frame told by the count
 // func_8008E944 keeps at 0x800C8C40.
-
-// A tile's last solid texel at a side whose coordinate is within a texel of its start (0, so 1) or of a power-of-two
-// edge (so the edge less 2), or NAN where it is no tile's side.
-static float solid_texel(float coord) {
-    if (coord >= -0.01f && coord <= 1.0f) {
-        return 1.5f;
-    }
-    for (float edge = 8.0f; edge <= 1024.0f; edge *= 2.0f) {
-        if (coord >= edge - 1.0f && coord <= edge + 0.01f) {
-            return edge - 1.5f;
-        }
-    }
-    return NAN;
-}
 
 static float rect_coord(uint8_t* rdram, gpr rect, int offset) {
     return (int16_t)MEM_HU(offset, rect) / 32.0f;
@@ -133,12 +125,86 @@ static float rect_step(uint8_t* rdram, gpr rect, int offset) {
     return (int16_t)MEM_HU(offset, rect) / 1024.0f;
 }
 
+// A logo tile's two textures in RDRAM: its colour (32x32 RGBA16) and its mask (32x32 I4).
+struct TileTextures {
+    gpr colour, mask;
+};
+
+// The textures of the logo tile about to be written at command, or zeros where the rectangle isn't one: the latest
+// G_SETTIMG of each before it, back to the rectangle before, in the list or in a texture's load block that the list
+// calls (G_DL, which F3DEX numbers 0x06, into a block that ends at G_ENDDL), and the G_SETTILE and G_SETTILESIZE that
+// make tiles 0 and 1 the logo's (wrapped at 32 texels, from 0.5 to 32).
+static TileTextures find_tile_textures(uint8_t* rdram, gpr command) {
+    gpr colour = 0, mask = 0;
+    bool tiles[4] = {};
+    auto note = [&](gpr at) {
+        const uint32_t w0 = MEM_W(0, at), w1 = MEM_W(4, at);
+        if (w0 == 0xFD100000u && colour == 0 && (w1 >> 24) == 0x80) {
+            colour = (gpr)(int32_t)w1;
+        }
+        else if (w0 == 0xFD900000u && mask == 0 && (w1 >> 24) == 0x80) {
+            mask = (gpr)(int32_t)w1;
+        }
+        tiles[0] |= w0 == 0xF5101000u && w1 == 0x00014050u;
+        tiles[1] |= w0 == 0xF5800500u && w1 == 0x01014050u;
+        tiles[2] |= w0 == 0xF2002002u && w1 == 0x00080080u;
+        tiles[3] |= w0 == 0xF2002002u && w1 == 0x01080080u;
+    };
+    for (int k = 1; k <= 48; k++) {
+        const gpr at = command - 8 * k;
+        const uint32_t w0 = MEM_W(0, at), w1 = MEM_W(4, at);
+        if ((w0 >> 24) == 0xE4) {
+            break;
+        }
+        if (w0 == 0x06000000u && (w1 >> 24) == 0x80) {
+            const gpr block = (gpr)(int32_t)w1;
+            int length = 0;
+            while (length < 32 && ((uint32_t)MEM_W(8 * length, block) >> 24) != 0xB8) {
+                length++;
+            }
+            for (int j = length - 1; j >= 0; j--) {
+                note(block + 8 * j);
+            }
+        }
+        else {
+            note(at);
+        }
+    }
+    if (colour == 0 || mask == 0 || !tiles[0] || !tiles[1] || !tiles[2] || !tiles[3]) {
+        return {};
+    }
+    return { colour, mask };
+}
+
+// Copies a column (axis 0) or row (axis 1) of one tile's texels, colour and mask, over another's.
+static void copy_texels(uint8_t* rdram, const TileTextures& from, int from_line, const TileTextures& to, int to_line,
+    int axis) {
+    for (int i = 0; i < 32; i++) {
+        const int from_x = axis == 0 ? from_line : i, from_y = axis == 0 ? i : from_line;
+        const int to_x = axis == 0 ? to_line : i, to_y = axis == 0 ? i : to_line;
+        MEM_H(2 * (to_y * 32 + to_x), to.colour) = MEM_H(2 * (from_y * 32 + from_x), from.colour);
+        const uint8_t texel = (MEM_BU(from_y * 16 + from_x / 2, from.mask) >> ((from_x & 1) ? 0 : 4)) & 0xF;
+        const uint8_t pair = MEM_BU(to_y * 16 + to_x / 2, to.mask);
+        MEM_B(to_y * 16 + to_x / 2, to.mask) = (int8_t)((to_x & 1) ? (pair & 0xF0) | texel : (pair & 0x0F) | (texel << 4));
+    }
+}
+
+// Where (quarter pixels) a tile drawn from p, its coordinate c there and its step per pixel step, comes inside 0.5-31.5
+// and where it leaves it.
+static float tile_enters(float p, float c, float step) {
+    return p + ((step > 0.0f ? 0.5f : 31.5f) - c) / step * 4.0f;
+}
+
+static float tile_leaves(float p, float c, float step) {
+    return p + ((step > 0.0f ? 31.5f : 0.5f) - c) / step * 4.0f;
+}
+
 struct DrawnRect {
     gpr command;
     int32_t x0, y0, x1, y1; // as the game gave them, to tell its rows and columns
     int32_t start[2], end[2]; // as drawn, across and down
     float coord[2], step[2];
-    float end_solid[2]; // solid_texel() at its right and bottom
+    TileTextures textures;
 };
 static DrawnRect drawn_rects[64];
 static int drawn_rect_count = 0;
@@ -148,47 +214,42 @@ static uint32_t rect_edges_word(const DrawnRect& rect) {
     return 0xE4000000u | ((uint32_t)(rect.end[0] & 0xFFF) << 12) | (uint32_t)(rect.end[1] & 0xFFF);
 }
 
-static uint32_t rect_steps_word(const DrawnRect& rect) {
-    return ((uint32_t)(uint16_t)(int16_t)std::lround(rect.step[0] * 1024.0f) << 16) |
-        (uint32_t)(uint16_t)(int16_t)std::lround(rect.step[1] * 1024.0f);
-}
-
-// Joins a rectangle that starts at start (quarter pixels) on axis, its texture coordinate there coord and its step per
-// pixel step, to before, which it overlaps there: returns where it starts now, and sets coord to its coordinate there.
-static int32_t join_tiles(uint8_t* rdram, DrawnRect& before, int axis, int32_t start, int32_t end, float& coord,
-    float step) {
-    const float solid = solid_texel(coord), before_solid = before.end_solid[axis];
-    if (std::isnan(solid) || std::isnan(before_solid) || step == 0.0f || before.step[axis] == 0.0f) {
+// Joins a logo tile (its textures) that starts at start (quarter pixels) on axis, its texture coordinate there coord
+// and its step per pixel step, to before, which it overlaps there: returns where it starts now, and sets coord to its
+// coordinate there.
+static int32_t join_tiles(uint8_t* rdram, DrawnRect& before, const TileTextures& textures, int axis, int32_t start,
+    int32_t end, float& coord, float step) {
+    if ((step > 0.0f) != (before.step[axis] > 0.0f) || (uint32_t)MEM_W(0x0, before.command) != rect_edges_word(before)) {
         return start;
     }
-    if ((uint32_t)MEM_W(0x0, before.command) != rect_edges_word(before) ||
-        (uint32_t)MEM_W(0x14, before.command) != rect_steps_word(before)) {
+    // The whole pixel nearest halfway between where this one comes inside its texture and where the one before leaves.
+    const float enters = tile_enters(start, coord, step);
+    const float leaves = std::min<float>(tile_leaves(before.start[axis], before.coord[axis], before.step[axis]),
+        before.end[axis]);
+    const int32_t first = std::max<int32_t>((int32_t)std::ceil(enters / 4.0f - 0.01f) * 4, before.start[axis] + 4);
+    const int32_t last = std::min<int32_t>((int32_t)std::floor(leaves / 4.0f + 0.01f) * 4, end - 4);
+    if (first > last) {
         return start;
     }
-    // Where each reaches its solid texel as drawn, and the join on the whole pixel halfway between.
-    const float before_at = before.start[axis] + (before_solid - before.coord[axis]) / before.step[axis] * 4.0f;
-    const float at = start + (solid - coord) / step * 4.0f;
-    const int32_t join = std::clamp<int32_t>(std::lround((before_at + at) * 0.125f) * 4,
-        std::max(start, before.start[axis] + 4), std::min(before.end[axis], end - 4));
-    const float before_step = (before_solid - before.coord[axis]) / ((join - before.start[axis]) / 4.0f);
-    if (before_step / before.step[axis] < 0.95f || before_step / before.step[axis] > 1.05f ||
-        std::abs(solid - (coord + (join - start) / 4.0f * step)) > 1.5f) {
-        return start;
-    }
+    const int32_t join = std::clamp<int32_t>(std::lround((enters + leaves) / 8.0f) * 4, first, last);
+    // The one before ends at its texture's high edge where its coordinate grows, so its ring there is its last line (31)
+    // and the texels beside it the line before (30); this one starts at the other edge.
+    const int before_ring = step > 0.0f ? 31 : 0, ring = 31 - before_ring;
+    const int before_inner = step > 0.0f ? 30 : 1, inner = 31 - before_inner;
+    copy_texels(rdram, textures, inner, before.textures, before_ring, axis);
+    copy_texels(rdram, before.textures, before_inner, textures, ring, axis);
     before.end[axis] = join;
-    before.step[axis] = before_step;
     MEM_W(0x0, before.command) = (int32_t)rect_edges_word(before);
-    MEM_W(0x14, before.command) = (int32_t)rect_steps_word(before);
-    coord = solid;
+    coord += (join - start) / 4.0f * step;
     return join;
 }
 
 // The 2D drawer's scaled texture rectangles (us.toml's hook in func_8009784C calls this before one is written, to
 // command). A rectangle over the whole screen (the fades) is drawn from 0 to a pixel short of its right and bottom
 // edges, and RT64 stretches a rectangle across a wide picture only when it spans the screen, so a fade covered only the
-// 4:3 middle: it is made to span it. A big image's tiles are joined (above) and kept inside their textures. The
-// rectangle is +0x0 x, +0x4 y, +0x8 right, +0xC bottom in quarter pixels, its texture coordinates at +0x16 and +0x1A
-// (S10.5) and their steps per pixel at +0x1E and +0x22 (S5.10).
+// 4:3 middle: it is made to span it. The logo's tiles are joined (above), and other rectangles kept inside their
+// textures. The rectangle is +0x0 x, +0x4 y, +0x8 right, +0xC bottom in quarter pixels, its texture coordinates at
+// +0x16 and +0x1A (S10.5) and their steps per pixel at +0x1E and +0x22 (S5.10).
 extern "C" void r2_fix_rect(uint8_t* rdram, gpr rect, gpr command) {
     const int32_t screen_width = MEM_W(0, (gpr)(int32_t)0x8001A110) * 4;
     const int32_t screen_height = MEM_W(0, (gpr)(int32_t)0x8001A114) * 4;
@@ -200,43 +261,50 @@ extern "C" void r2_fix_rect(uint8_t* rdram, gpr rect, gpr command) {
         }
     }
 
+    const TileTextures textures = find_tile_textures(rdram, command);
+    const float ds = rect_step(rdram, rect, 0x1E), dt = rect_step(rdram, rect, 0x22);
+    if (textures.colour == 0 || ds == 0.0f || dt == 0.0f) {
+        keep_inside_texture(rdram, rect, x1 - x0, 0x16, 0x1E);
+        keep_inside_texture(rdram, rect, y1 - y0, 0x1A, 0x22);
+        return;
+    }
+
     const int32_t frame = MEM_W(0, (gpr)(int32_t)0x800C8C40);
     if (frame != drawn_rects_frame || (drawn_rect_count > 0 && command <= drawn_rects[drawn_rect_count - 1].command)) {
         drawn_rects_frame = frame;
         drawn_rect_count = 0;
     }
-    float s = rect_coord(rdram, rect, 0x16), t = rect_coord(rdram, rect, 0x1A);
-    const float ds = rect_step(rdram, rect, 0x1E), dt = rect_step(rdram, rect, 0x22);
-    DrawnRect drawn = { command, x0, y0, x1, y1, { x0, y0 }, { x1, y1 }, {}, {},
-        { solid_texel(s + (x1 - x0) / 4.0f * ds), solid_texel(t + (y1 - y0) / 4.0f * dt) } };
-    int32_t start_x = x0, start_y = y0;
+    DrawnRect drawn = { command, x0, y0, x1, y1, { x0, y0 }, { x1, y1 },
+        { rect_coord(rdram, rect, 0x16), rect_coord(rdram, rect, 0x1A) }, { ds, dt }, textures };
     for (int i = 0; i < drawn_rect_count; i++) {
         DrawnRect& before = drawn_rects[i];
         if (before.y0 == y0 && before.y1 == y1 && before.x0 < x0 && x0 < before.x1 && before.x1 < x1) {
-            start_x = join_tiles(rdram, before, 0, start_x, x1, s, ds);
+            drawn.start[0] = join_tiles(rdram, before, textures, 0, drawn.start[0], x1, drawn.coord[0], ds);
         }
         else if (before.x0 == x0 && before.x1 == x1 && before.y0 < y0 && y0 < before.y1 && before.y1 < y1) {
-            start_y = join_tiles(rdram, before, 1, start_y, y1, t, dt);
+            drawn.start[1] = join_tiles(rdram, before, textures, 1, drawn.start[1], y1, drawn.coord[1], dt);
         }
     }
-    if (start_x != x0) {
-        MEM_W(0x0, rect) = start_x;
-        MEM_H(0x16, rect) = (int16_t)std::lround(s * 32.0f);
+    // Its sides cut back to where it reads only its own texels, on whole pixels.
+    for (int axis = 0; axis < 2; axis++) {
+        const float enters = tile_enters(drawn.start[axis], drawn.coord[axis], drawn.step[axis]);
+        if (enters > drawn.start[axis] + 0.01f) {
+            const int32_t start = (int32_t)std::ceil(enters / 4.0f - 0.01f) * 4;
+            drawn.coord[axis] += (start - drawn.start[axis]) / 4.0f * drawn.step[axis];
+            drawn.start[axis] = start;
+        }
+        const float leaves = tile_leaves(drawn.start[axis], drawn.coord[axis], drawn.step[axis]);
+        if (leaves < drawn.end[axis] - 0.01f) {
+            drawn.end[axis] = (int32_t)std::floor(leaves / 4.0f + 0.01f) * 4;
+        }
     }
-    if (start_y != y0) {
-        MEM_W(0x4, rect) = start_y;
-        MEM_H(0x1A, rect) = (int16_t)std::lround(t * 32.0f);
-    }
-
-    keep_inside_texture(rdram, rect, x1 - start_x, 0x16, 0x1E);
-    keep_inside_texture(rdram, rect, y1 - start_y, 0x1A, 0x22);
+    MEM_W(0x0, rect) = drawn.start[0];
+    MEM_W(0x4, rect) = drawn.start[1];
+    MEM_W(0x8, rect) = drawn.end[0];
+    MEM_W(0xC, rect) = drawn.end[1];
+    MEM_H(0x16, rect) = (int16_t)std::lround(drawn.coord[0] * 32.0f);
+    MEM_H(0x1A, rect) = (int16_t)std::lround(drawn.coord[1] * 32.0f);
     if (drawn_rect_count < 64) {
-        drawn.start[0] = start_x;
-        drawn.start[1] = start_y;
-        drawn.coord[0] = rect_coord(rdram, rect, 0x16);
-        drawn.coord[1] = rect_coord(rdram, rect, 0x1A);
-        drawn.step[0] = rect_step(rdram, rect, 0x1E);
-        drawn.step[1] = rect_step(rdram, rect, 0x22);
         drawn_rects[drawn_rect_count++] = drawn;
     }
 }
