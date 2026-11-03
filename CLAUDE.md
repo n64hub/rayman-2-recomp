@@ -93,6 +93,11 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   planes, its full-screen fades, that backdrop's gradient and the scene transition it blacks out from the CPU (which
   needs `RT64_STRETCH_CPU_CHANGES`, set in `CMakeLists.txt`), none of them at Original. It also joins the title logo's
   overlapping tiles at every aspect, which upscaled showed their seams.
+- **Interpolation.** The game moves some things only on its own frames, which RT64 moves on every frame drawn: its
+  texture scrolls (the intro's sky, the language menu's water), masked tiles stepped a texel on some frames and not
+  others (rt64-web 08427aa), and its menu cursor, a butterfly whose vertices the CPU places anew each frame with no
+  matrix ID (rt64-web a03baa2). The butterfly's light flickering between two levels is the game's own: vertex
+  colours it writes, no RSP light, the same at Original.
 - **Testing.** `--boot` starts the game from the launcher's first frame once the ROM is stored, `--window <w>x<h>`
   sizes the window, `--input <file>` plays port 1 from a script of timed button states (`main.cpp` says the format),
   and on Windows `--stacks <seconds>` prints every thread's stack that long after start, for unattended runs and
