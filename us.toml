@@ -107,6 +107,46 @@ func = "func_800976E0"
 before_vram = 0x800976E0
 text = "{ int r2_wide_sprite(uint8_t*, recomp_context*); if (r2_wide_sprite(rdram, ctx)) return; }"
 
+# The HUD's pass, func_800BC53C: its bars and icons (until func_800BC460 returns, at 0x800BC7EC) and then its text, from
+# func_800C2844, until it returns at 0x800BC824. Each bar, icon and letter is a sprite that func_80096EAC has the 2D
+# drawer (func_8009784C) write at 0x80097360 (the list in a0, its rectangle in a1, the screen in a3) and that ends the
+# list at 0x80097368 (v0), and func_800C2844 draws a text entry with func_800C2F48 at 0x800C29E8.
+# src/game/widescreen.cpp draws the HUD from the wide picture's edges there (none at Original).
+[[patches.hook]]
+func = "func_800BC53C"
+before_vram = 0x800BC53C
+text = "{ void r2_hud_start(); r2_hud_start(); }"
+
+[[patches.hook]]
+func = "func_800BC53C"
+before_vram = 0x800BC7EC
+text = "{ void r2_hud_icons_end(); r2_hud_icons_end(); }"
+
+[[patches.hook]]
+func = "func_800BC53C"
+before_vram = 0x800BC824
+text = "{ void r2_hud_end(); r2_hud_end(); }"
+
+[[patches.hook]]
+func = "func_80096EAC"
+before_vram = 0x80097360
+text = "{ gpr r2_hud_sprite(uint8_t*, gpr, gpr, gpr); ctx->r4 = r2_hud_sprite(rdram, ctx->r4, ctx->r5, ctx->r7); }"
+
+[[patches.hook]]
+func = "func_80096EAC"
+before_vram = 0x80097368
+text = "{ gpr r2_hud_sprite_end(uint8_t*, gpr); ctx->r2 = r2_hud_sprite_end(rdram, ctx->r2); }"
+
+[[patches.hook]]
+func = "func_800C2844"
+before_vram = 0x800C29E8
+text = "{ void r2_hud_text_start(uint8_t*); r2_hud_text_start(rdram); }"
+
+[[patches.hook]]
+func = "func_800C2844"
+before_vram = 0x800C29F0
+text = "{ void r2_hud_text_end(uint8_t*); r2_hud_text_end(rdram); }"
+
 # The scene transition's thread, func_8008EF78, blacks out a pass of the shown framebuffer (a0) at 0x8008F07C, its map
 # in a3, the pass's level in a1 and the loop's count in v1. src/game/widescreen.cpp does the pass for a wide picture
 # and leaves the loop nothing to do (none at Original).
