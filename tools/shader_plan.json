@@ -60,6 +60,14 @@
    "survey.js"
   ],
   [
+   "eval",
+   "r2.playing(\"ly_20\", 60000)"
+  ],
+  [
+   "wait",
+   20000
+  ],
+  [
    "pressUntil",
    "Enter",
    "Enter",
