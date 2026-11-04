@@ -57,8 +57,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 set(RT64_STATIC TRUE)
 set(RT64_SDL_WINDOW_VULKAN TRUE)
-# The scene transition is drawn from the CPU, and RT64 stretches what the CPU writes across a wide picture, which
-# src/game/widescreen.cpp writes squeezed in by as much.
+# The scene transition is drawn from the CPU, a pass each retrace blacking out the pixels whose byte in a map equals
+# the pass's level: RT64 stretches what the CPU writes across a wide picture, so its blotches spread over the whole
+# picture, a third wider at 16:9, not only its 4:3 middle.
 set(RT64_STRETCH_CPU_CHANGES TRUE)
 # A sprite past the 4:3 edges is drawn under an extended scissor that reaches the window's edges
 # (src/game/widescreen.cpp), far past the framebuffer's own: RT64_SCISSOR_INSIDE_FRAMEBUFFER, on with Emscripten and

@@ -147,14 +147,6 @@ func = "func_800C2844"
 before_vram = 0x800C29F0
 text = "{ void r2_hud_text_end(uint8_t*); r2_hud_text_end(rdram); }"
 
-# The scene transition's thread, func_8008EF78, blacks out a pass of the shown framebuffer (a0) at 0x8008F07C, its map
-# in a3, the pass's level in a1 and the loop's count in v1. src/game/widescreen.cpp does the pass for a wide picture
-# and leaves the loop nothing to do (none at Original).
-[[patches.hook]]
-func = "func_8008EF78"
-before_vram = 0x8008F07C
-text = "{ gpr r2_wipe_pass(uint8_t*, gpr, gpr, gpr, gpr); ctx->r3 = r2_wipe_pass(rdram, ctx->r7, ctx->r4, ctx->r5, ctx->r3); }"
-
 # A menu's backdrop gradient: func_80098D58 makes each vertex's colour from its place (its x read into v0 at 0x80098EB8,
 # the vertex in t0) and then writes the display list that draws them, at 0x80098FE8. src/game/widescreen.cpp spreads
 # them across a wide picture there (none at Original) and gives the colours the x they had.
