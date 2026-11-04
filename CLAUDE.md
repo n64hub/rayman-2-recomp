@@ -75,7 +75,10 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   as each audio frame is made and filled each retrace with the stops of finished voices. A graphics list RT64 takes
   long to read (lavapipe building a pipeline) holds back the audio task, and after about 84 retraces the queue
   overwrites the voice table after it: "Failed to find function at 0x8019B..." at the next retrace. A hook in
-  `us.toml` drops what would go past its end.
+  `us.toml` drops what would go past its end. The music's sequence player fills its own pool of events then too, with
+  the MIDI messages the game sends each retrace, and once the pool is empty the event that wakes the player each audio
+  frame can't post itself again: its loop spins for good on the next audio frame (a freeze, the audio thread at a whole
+  core). A hook on `alEvtqPostEvent` keeps the pool's last event for it.
 - **Microcodes.** Graphics: F3DEX.NoN 1.23, which RT64 knows. Audio: `aspMain` (libultra's ABI 1), recompiled by
   RSPRecomp from `aspMain.us.toml`. librecomp's vector unit uses SSE4.1, so `RecompiledFuncs` builds with
   `-march=nehalem` on x86-64.
