@@ -1,8 +1,9 @@
 // Widescreen for what the game decides and draws for a 4:3 screen, which RT64's Aspect Ratio Expand (or Manual) widens
 // the picture past: its culling (us.toml's hook in func_8009989C), its full-screen 2D rectangles (the hook in
 // func_8009784C), a menu's backdrop (the hooks in func_80098D58), its sprites' clip to the screen (the hook in
-// func_800976E0), its scene transition, drawn from the CPU (the hook in func_8008EF78), and its HUD, placed at a 4:3
-// screen's corners (the hooks in func_800BC53C and the sprites' and text's drawers), each left alone at Original.
+// func_800976E0) and its HUD, placed at a 4:3 screen's corners (the hooks in func_800BC53C and the sprites' and text's
+// drawers), each left alone at Original. Its scene transition, drawn from the CPU, needs nothing here: RT64 stretches
+// what the CPU writes across the wide picture (CMakeLists.txt), so the black spreads over the whole picture.
 // The 2D rectangles' hook also joins a big image's tiles, which show their seams upscaled at any aspect.
 
 #include <algorithm>
@@ -592,52 +593,4 @@ extern "C" void r2_hud_text_end(uint8_t* rdram) {
             return;
         }
     }
-}
-
-// The 4:3 column that a picture's column x of width shows once RT64 stretches it k times across the wide picture:
-// the middle shows the 4:3 picture, and the sides mirror it at its edges.
-static int stretched_column(int x, int width, float k) {
-    float v = (x + 0.5f) * k - width * (k - 1.0f) * 0.5f;
-    if (v < 0.0f) {
-        v = -v;
-    }
-    else if (v >= width) {
-        v = 2.0f * width - v;
-    }
-    return std::clamp(int(v), 0, width - 1);
-}
-
-// The transition between scenes (func_8008EF78's thread, us.toml's hook calls this): while the game draws nothing, the
-// thread blacks out the shown framebuffer from the CPU, a pass each retrace, each pass the pixel pairs whose byte in a
-// map (the other framebuffer, a byte a pair) equals that pass's level, so the black spreads in blotches. RT64 shows
-// what the CPU writes in the 4:3 middle of a wide picture, so the sides stayed as they were, cut off on a straight
-// line. RT64 stretches it across the picture for this game (main.cpp), and this pass writes the blotches squeezed
-// in by as much, so they spread from the map, mirrored at its edges, over the whole picture. Returns the word count
-// left for the game's own pass: none once this has done it.
-extern "C" gpr r2_wipe_pass(uint8_t* rdram, gpr map, gpr fb, gpr level, gpr words) {
-    const float k = widescreen_scale();
-    if (k <= 1.0f) {
-        return words;
-    }
-    const int width = MEM_W(0, (gpr)(int32_t)0x8001A110), height = MEM_W(0, (gpr)(int32_t)0x8001A114);
-    if (width <= 0 || height <= 0 || (int64_t)width * height / 8 != (int64_t)words) {
-        return words;
-    }
-    static int columns[1024];
-    if (width > 1024) {
-        return words;
-    }
-    for (int x = 0; x < width; x++) {
-        columns[x] = stretched_column(x, width, k);
-    }
-    const int8_t match = (int8_t)level;
-    for (int y = 0; y < height; y++) {
-        const int32_t row = y * width;
-        for (int x = 0; x < width; x++) {
-            if (MEM_B((row + columns[x]) / 2, map) == match) {
-                MEM_H((row + x) * 2, fb) = 0;
-            }
-        }
-    }
-    return 0;
 }
