@@ -79,6 +79,12 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   the MIDI messages the game sends each retrace, and once the pool is empty the event that wakes the player each audio
   frame can't post itself again: its loop spins for good on the next audio frame (a freeze, the audio thread at a whole
   core). A hook on `alEvtqPostEvent` keeps the pool's last event for it.
+- **An animation's last frame.** A script reads an animation as finished by a flag the animation player sets at its
+  last frame. The game's own frames nearly always move an animation each frame; at the recomp's 60 a second most
+  don't, and the player's quick step for such a frame reached the last one and set the flag, only for the full step
+  that some actors also take each frame to loop the animation and clear it before a script looked. Goin' Quackers, on
+  the same engine, froze its player for good after a talk so, the speaker talking on. A hook in `us.toml` leaves the
+  last frame to the full step, which sets the flag and loops a frame later.
 - **Microcodes.** Graphics: F3DEX.NoN 1.23, which RT64 knows. Audio: `aspMain` (libultra's ABI 1), recompiled by
   RSPRecomp from `aspMain.us.toml`. librecomp's vector unit uses SSE4.1, so `RecompiledFuncs` builds with
   `-march=nehalem` on x86-64.

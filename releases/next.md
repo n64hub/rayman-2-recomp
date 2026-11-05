@@ -1,0 +1,1 @@
+**Fixed:** an animation's last frame is no longer missed at 60 frames a second. A character could loop its animation before the game saw it end, which in Goin' Quackers, on the same engine, left the player frozen for good after a talk.
