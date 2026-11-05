@@ -61,6 +61,10 @@ MANUAL_NAMES = {
     0x80008914: "__osPackReadData",        # follows osContGetReadData
     0x8000AA60: "osMotorStart",            # osMotorStop's twin, after it
     0x80012470: "__osGetId",               # __osPfsSelectBank, __osContRamRead, __osCheckPackId, __osRepairPackId
+    # Two stores of a0 and a1 to the time osGetTime reads (0x80021E40). Unnamed, the game's resets of the time went to
+    # that word and not to the runtime's osGetTime, which then counted from the program's start, the launcher's time
+    # included, where the game counts from its boot.
+    0x80004280: "osSetTime",
     # The PI and SI access queues have the same code but for the globals they touch, so the signatures can't tell
     # them apart: the PI's lie with osPiStartDma, the SI's with __osSiRawStartDma.
     0x8000BA90: "__osPiCreateAccessQueue",
