@@ -86,6 +86,9 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   and `src/game/controller_pak.cpp` keeps a pak of 123 pages in `saves/controllerpak_1.mpk`, the format emulators use.
   The game reads the controllers' status for a pak first, so port 1 reports one (`main.cpp`,
   `get_connected_device_info`); with none it never leaves the save slots' screen.
+  Start held at boot opens the game's Controller Pak manager, whose font the game reads with CPU loads straight from
+  the cartridge's address, which the runtime doesn't map: a hook in `us.toml` decodes it from the ROM the runtime holds
+  (`controller_pak.cpp`). Without it, a player pressing Start through the logos crashed the program.
 - **The Expansion Pak.** The game finds the runtime's 8 MB and says so at boot ("Expansion Pak detected!").
 - **Input.** RecompFrontend's default bindings. Keyboard: WASD the stick, Space A, Left Shift B, Q Z, R R, E L, Enter
   Start, the arrows the C buttons. The game reads port 1 only.

@@ -1,0 +1,1 @@
+**Fixed:** pressing Start while the game boots no longer crashes it. Start held as the game starts opens its Controller Pak manager, as on a console, and reading that screen's font crashed the program a few seconds in, so a player pressing Start to get past the logos could lose the game before the title screen.

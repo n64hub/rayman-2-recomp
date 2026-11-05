@@ -183,3 +183,11 @@ text = "{ void r2_widen_backdrop(uint8_t*); r2_widen_backdrop(rdram); }"
 func = "func_800004C0"
 before_vram = 0x80000698
 text = "{ void pause_self(uint8_t*); pause_self(rdram); }"
+
+# The Controller Pak manager's font. Held at boot, Start opens the game's pak manager, and func_800F7960 decodes its font
+# from the ROM with CPU loads from the cartridge's address (0xB0000B70), which the runtime doesn't map: the program
+# crashed a few seconds in. src/game/controller_pak.cpp does the decode from the ROM the runtime holds in its place.
+[[patches.hook]]
+func = "func_800F7960"
+before_vram = 0x800F7960
+text = "{ void r2_pak_manager_font(uint8_t*, recomp_context*); r2_pak_manager_font(rdram, ctx); return; }"
