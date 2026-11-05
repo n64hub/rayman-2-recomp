@@ -62,7 +62,7 @@
 #include "window_icon_bmp.h"
 #endif
 
-const std::string version_string = "0.1.5";
+const std::string version_string = "0.1.7";
 
 template<typename... Ts>
 void exit_error(const char* str, Ts ...args) {
@@ -402,12 +402,18 @@ static bool get_n64_input(int player_index, uint16_t* buttons_out, float* x_out,
 }
 
 // --boot (development): start the game on the launcher's first frame, as its Start Game option does, so a run
-// needs nobody at the window. Needs the ROM already stored.
+// needs nobody at the window. Needs the ROM already stored. --boot-after <seconds> starts it that long after the
+// launcher's first frame instead, as a player who leaves the launcher open first.
 static bool autoboot = false;
+static double autoboot_after = 0.0;
 
 void on_launcher_update(recompui::LauncherMenu*) {
     static bool done = false;
     if (!autoboot || done) {
+        return;
+    }
+    static const auto first_frame = std::chrono::steady_clock::now();
+    if (std::chrono::duration<double>(std::chrono::steady_clock::now() - first_frame).count() < autoboot_after) {
         return;
     }
     done = true;
@@ -446,6 +452,10 @@ int main(int argc, char** argv) {
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--boot") == 0) {
             autoboot = true;
+        }
+        else if (strcmp(argv[i], "--boot-after") == 0 && i + 1 < argc) {
+            autoboot = true;
+            autoboot_after = atof(argv[++i]);
         }
         else if (strcmp(argv[i], "--input") == 0 && i + 1 < argc) {
             load_input_script(argv[++i]);

@@ -86,6 +86,9 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   and `src/game/controller_pak.cpp` keeps a pak of 123 pages in `saves/controllerpak_1.mpk`, the format emulators use.
   The game reads the controllers' status for a pak first, so port 1 reports one (`main.cpp`,
   `get_connected_device_info`); with none it never leaves the save slots' screen.
+  Start held at boot opens the game's Controller Pak manager, whose font the game reads with CPU loads straight from
+  the cartridge's address, which the runtime doesn't map: a hook in `us.toml` decodes it from the ROM the runtime holds
+  (`controller_pak.cpp`). Without it, a player pressing Start through the logos crashed the program.
 - **The Expansion Pak.** The game finds the runtime's 8 MB and says so at boot ("Expansion Pak detected!").
 - **Input.** RecompFrontend's default bindings. Keyboard: WASD the stick, Space A, Left Shift B, Q Z, R R, E L, Enter
   Start, the arrows the C buttons. The game reads port 1 only.
@@ -110,7 +113,7 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
 - **The intro's white fade.** As "Ubi Soft presents" fades out, the intro story cuts to white and its next shot of the
   sea comes up through a white fog in about 0.6 s, "PRESENTS" still fading over it. That is the game's own: a PAL
   console's capture shows it, and so does the desktop build at Framerate Original and Aspect Ratio Original.
-- **Testing.** `--boot` starts the game from the launcher's first frame once the ROM is stored, `--window <w>x<h>`
-  sizes the window, `--input <file>` plays port 1 from a script of timed button states (`main.cpp` says the format),
-  and on Windows `--stacks <seconds>` prints every thread's stack that long after start, for unattended runs and
-  hangs.
+- **Testing.** `--boot` starts the game from the launcher's first frame once the ROM is stored, `--boot-after
+  <seconds>` that long after it (a player who leaves the launcher open), `--window <w>x<h>` sizes the window,
+  `--input <file>` plays port 1 from a script of timed button states (`main.cpp` says the format), and on Windows
+  `--stacks <seconds>` prints every thread's stack that long after start, for unattended runs and hangs.
