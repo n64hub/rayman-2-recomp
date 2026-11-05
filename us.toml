@@ -83,6 +83,24 @@ func = "alEvtqPostEvent"
 before_vram = 0x8000F8E4
 text = "if (MEM_H(0, ctx->r5) != 9) { gpr item = MEM_W(0, ctx->r4); if (item == 0 || MEM_W(0, item) == 0) return; }"
 
+# An animation's last frame. Each frame func_80026C68 steps an actor's animation player (s0 in func_80037CD0, its
+# animation in s3, whose first halfword is its count of frames). Where the player's frame didn't move the frame before
+# (+0xC3 set), func_80037CD0 takes a quick step: it works the frame out from the time (+0xCE frames a second since
+# +0xB4, by the engine's clock in milliseconds at 0x800E5DB4, or one on while 0x800C6FA0 steps the game a frame at a
+# time) and, at the last, sets +0x8F, which a script reads as the animation finished. Otherwise func_80037F28 takes the
+# full step, which first loops the animation or starts the next one if the frame is the last, and then moves the frame
+# on. An actor that takes the full step every frame as well (+0xE8 set, called at 0x80026DB8) took both in one frame
+# when the quick step reached the last frame, and the full step looped the animation before any script saw +0x8F. At
+# the recomp's 60 frames a second most frames don't move an animation, so the quick step often reaches the last frame.
+# Goin' Quackers, on the same engine, froze its player for good after a talk so: the talk's script waited for the
+# speaker's end-of-talk animation to finish, and it never read finished. Where the quick step would reach the last
+# frame of an animation longer than one, +0xC3 is cleared, so the full step reaches it and sets +0x8F, and the loop
+# comes a frame later, as when each frame moves.
+[[patches.hook]]
+func = "func_80037CD0"
+before_vram = 0x80037D74
+text = "if (MEM_BU(0xC3, ctx->r16) != 0) { uint32_t n = MEM_HU(0, ctx->r19); uint32_t f = MEM_W(0, (gpr)(int32_t)0x800C6FA0) != 0 ? (uint32_t)MEM_HU(0x74, ctx->r16) + 1 : (uint32_t)((int32_t)MEM_BU(0xCE, ctx->r16) * (int32_t)(MEM_W(0, (gpr)(int32_t)0x800E5DB4) - MEM_W(0xB4, ctx->r16))) / 1000; if (n > 1 && f >= n) MEM_B(0xC3, ctx->r16) = 0; }"
+
 # A menu's backdrop clears black. Each frame func_8008DC44 clears the colour image with a fill of the viewport's colour
 # (+0x7C, the level's fog: teal in the Woods of Light), or of black where 0x800C8DB3 is set (the Controller Pak's
 # screens). While a menu shows its backdrop (the pause menu and its pages), a script sets 0x800C87D0, and

@@ -1,0 +1,1 @@
+**Fixed:** at 60 frames a second a character's animation could loop past its end before the game saw it finish. In Goin' Quackers, on the same engine, that left the player frozen for good after a talk; Rayman 2 gets the same fix.
