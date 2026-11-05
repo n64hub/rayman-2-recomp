@@ -95,7 +95,7 @@ functions = [
     { name = "osInitialize", vram = 0x80003EE0, size = 0x210 },
     { name = "osRecvMesg", vram = 0x800040F0, size = 0x130 },
     { name = "osSetEventMesg", vram = 0x80004220, size = 0x60 },
-    { name = "func_80004280", vram = 0x80004280, size = 0x20 },
+    { name = "osSetTime", vram = 0x80004280, size = 0x20 },
     { name = "osStartThread", vram = 0x800042A0, size = 0x120 },
     { name = "__osDequeueThread", vram = 0x800043C0, size = 0x40 },
     { name = "__osTimerServicesInit", vram = 0x80004400, size = 0x54 },
