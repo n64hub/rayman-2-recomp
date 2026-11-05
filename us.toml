@@ -209,3 +209,11 @@ text = "{ void pause_self(uint8_t*); pause_self(rdram); }"
 func = "func_800F7960"
 before_vram = 0x800F7960
 text = "{ void r2_pak_manager_font(uint8_t*, recomp_context*); r2_pak_manager_font(rdram, ctx); return; }"
+
+# The scene transition's start, func_800FADC8, loads the transition's map with func_800261D0 at 0x800FAEC8 into the
+# framebuffer at v0 plus a0 (added in the call's delay slot). src/game/transition.cpp waits there until that framebuffer
+# isn't the one shown.
+[[patches.hook]]
+func = "func_800FADC8"
+before_vram = 0x800FAEC8
+text = "{ void r2_wait_framebuffer_hidden(uint8_t*, gpr); r2_wait_framebuffer_hidden(rdram, ctx->r2 + ctx->r4); }"

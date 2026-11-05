@@ -20,8 +20,8 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   RecompFrontend's.
 - `src/`: RecompFrontend's main (`src/main/main.cpp`, with the GameEntry), the code sections it gives the runtime
   (`src/main/register_overlays.cpp`), the natives the patches call (`src/game/recomp_api.cpp`), the Controller Pak
-  (`src/game/controller_pak.cpp`), the libultra functions the runtime lacks (`src/game/libultra.cpp`), the settings,
-  and on Windows a stack trace on a crash (`src/main/crash_trace.cpp`).
+  (`src/game/controller_pak.cpp`), the libultra functions the runtime lacks (`src/game/libultra.cpp`), the scene
+  transition's wait (`src/game/transition.cpp`), the settings, and on Windows a stack trace on a crash (`src/main/crash_trace.cpp`).
 - `lib/`: upstream `rt64`, `N64ModernRuntime` and `RecompFrontend` at the commits N64Recomp-browser's web forks are
   built on, and `N64Recomp-browser` at a release tag. The web support every recomp's page shares is developed and
   documented there; `tools/build_n64recomp.sh` and `CMakeLists.txt` apply its `patches/` to the other three, and
@@ -108,9 +108,9 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   backdrop's gradient and its HUD, whose bars, icons and the counters beside them it draws from the wide picture's edges
   with RT64's rectangle alignment (a dialogue, its speaker's face and other text stay in the middle), none of them at
   Original. The scene transition, which the game blacks out from the CPU in blotches, is stretched across the picture by
-  `RT64_STRETCH_CPU_CHANGES`, the blotches a third wider at 16:9; `CMakeLists.txt` sets both options. It also joins the
-  title logo's overlapping tiles at every aspect, each tile's clear edge given its neighbour's texels, which upscaled
-  showed their seams.
+  `RT64_STRETCH_CPU_CHANGES`, the blotches a third wider at 16:9, and `src/game/transition.cpp` keeps its map out of a
+  framebuffer that is still shown; `CMakeLists.txt` sets both options. It also joins the title logo's overlapping tiles
+  at every aspect, each tile's clear edge given its neighbour's texels, which upscaled showed their seams.
 - **Interpolation.** The game moves some things only on its own frames, which RT64 moves on every frame drawn: its
   texture scrolls (the intro's sky, the language menu's water), masked tiles stepped a texel on some frames and not
   others (rt64-web 08427aa), and its menu cursor, a butterfly whose vertices the CPU places anew each frame with no

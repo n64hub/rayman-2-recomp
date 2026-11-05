@@ -1,1 +1,2 @@
+**Fixed:** as a scene transition starts (going into a level, and in the intro), the screen no longer shows a frame of noise and texture tiles before the blotches close in.
 **Fixed:** an animation's last frame is no longer missed at 60 frames a second. A character could loop its animation before the game saw it end, which in Goin' Quackers, on the same engine, left the player frozen for good after a talk.
