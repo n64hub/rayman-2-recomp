@@ -169,7 +169,7 @@ jobs:
             echo "attempt $i failed"; sleep $((i * 15))
           done
           exit 1
-      # The web support (CLAUDE.md, "How it fits together"): N64Recomp-browser's patches/ holds each of its forks as a
+      # The web support (CLAUDE.md, "What lives where"): N64Recomp-browser's patches/ holds each of its forks as a
       # patch on the upstream commit the fork is on, which its patches/patches.txt names, so the submodules here, and
       # plume, hlslpp and N64Recomp inside them, pin those commits.
       - name: Submodules pin the upstream commits N64Recomp-browser's patches are made on
