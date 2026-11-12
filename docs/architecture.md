@@ -68,10 +68,10 @@ finding that explains the game's code goes here or beside that code.
   Original; a bar that isn't full is two sprites, its filled part and its rest, both placed by the whole bar (the air
   bar reaches past the screen's left third, so its rest alone went where a 4:3 screen has it). The scene transition, which the game blacks out from the CPU in blotches, is stretched across the picture by
   `RT64_STRETCH_CPU_CHANGES`, the blotches a third wider at 16:9, and `src/game/transition.cpp` keeps its map out of a
-  framebuffer that is still shown; `CMakeLists.txt` sets both options. The passes write the last frame the game drew,
-  which RT64 also shows interpolated at the display's rate, from copies that never see the CPU's writes: a present
-  carrying them shows the framebuffer itself (`runtime-patches/rt64-1-*`), or with MSAA the last frame stood still and
-  cut to black. It also joins the title logo's overlapping tiles
+  framebuffer that is still shown; `CMakeLists.txt` sets both options. The passes write the last frame the game drew, which
+  RT64 also shows interpolated at the display's rate from copies that never see them, and RT64 drops a present that
+  falls behind and with it its share of them: `runtime-patches/rt64-1-*` shows them, or the last frame stood still and
+  cut to black, or the blotches stopped partway. It also joins the title logo's overlapping tiles
   at every aspect, each tile's clear edge given its neighbour's texels, which upscaled showed their seams.
 - **Render to RAM.** RT64's exact copy of each frame into RDRAM, on the page too (`main.cpp` says why): the scene
   transition's CPU writes go into the frame the RDP drew, after it is drawn, so neither off nor the copy a list late

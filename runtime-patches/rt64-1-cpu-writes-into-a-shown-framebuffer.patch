@@ -1,0 +1,47 @@
+diff --git a/src/hle/rt64_present_queue.cpp b/src/hle/rt64_present_queue.cpp
+index ae697ac..bfed6b1 100644
+--- a/src/hle/rt64_present_queue.cpp
++++ b/src/hle/rt64_present_queue.cpp
+@@ -220,7 +220,18 @@ namespace RT64 {
+                     }
+                 }
+ 
+-                if (presentFb->interpolationEnabled) {
++                // The CPU wrote into the framebuffer this present shows (the VI found its RAM changed since the list that drew
++                // it): the frames interpolated from that list don't hold what the CPU wrote, and with MSAA every frame shown
++                // comes from them, so a game drawing over its last frame from the CPU (a scene transition) showed that frame
++                // still. Its own target holds the list's last frame and the CPU's writes, so it is shown from that.
++                bool cpuChangedPresentFb = false;
++                for (const FramebufferOperation &op : present.fbOperations) {
++                    if ((op.type == FramebufferOperation::Type::WriteChanges) && (op.writeChanges.address == presentFb->addressStart)) {
++                        cpuChangedPresentFb = true;
++                    }
++                }
++
++                if (presentFb->interpolationEnabled && !cpuChangedPresentFb) {
+                     framesToPresent = frameCounters.count;
+                 }
+                 else {
+@@ -850,6 +861,22 @@ namespace RT64 {
+ #           endif
+ 
+                 if (skipPresent) {
++                    // A present dropped for a newer one still writes what the CPU changed into the framebuffer: each change
++                    // is RAM's difference from the one before, so the next present, holding only its own, showed the
++                    // picture without them for good (a scene transition's blotches stopped partway, or never showed).
++                    if (!present.fbOperations.empty()) {
++                        hlslpp::float2 resolutionScale;
++                        {
++                            std::scoped_lock<std::mutex> configurationLock(ext.sharedResources->configurationMutex);
++                            resolutionScale = ext.sharedResources->resolutionScale;
++                        }
++
++                        const std::scoped_lock lock(screenFbChangePoolMutex);
++                        RenderWorkerExecution workerExecution(ext.presentGraphicsWorker);
++                        ext.sharedResources->framebufferManager.performOperations(ext.presentGraphicsWorker, &screenFbChangePool, nullptr, ext.shaderLibrary,
++                            nullptr, present.fbOperations, ext.sharedResources->renderTargetManager, resolutionScale, 0, 0, nullptr);
++                    }
++
+                     skipInterpolation();
+                     notifyPresentId(present);
+                 }
