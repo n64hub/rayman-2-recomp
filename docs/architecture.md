@@ -62,7 +62,8 @@ finding that explains the game's code goes here or beside that code.
   GBI under a scissor `RT64_SCISSOR_INSIDE_FRAMEBUFFER` counts only to the frame's edges), its full-screen fades, that
   backdrop's gradient and its HUD, whose bars, icons and the counters beside them it draws from the wide picture's edges
   with RT64's rectangle alignment (a dialogue, its speaker's face and other text stay in the middle), none of them at
-  Original. The scene transition, which the game blacks out from the CPU in blotches, is stretched across the picture by
+  Original; a bar that isn't full is two sprites, its filled part and its rest, both placed by the whole bar (the air
+  bar reaches past the screen's left third, so its rest alone went where a 4:3 screen has it). The scene transition, which the game blacks out from the CPU in blotches, is stretched across the picture by
   `RT64_STRETCH_CPU_CHANGES`, the blotches a third wider at 16:9, and `src/game/transition.cpp` keeps its map out of a
   framebuffer that is still shown; `CMakeLists.txt` sets both options. It also joins the title logo's overlapping tiles
   at every aspect, each tile's clear edge given its neighbour's texels, which upscaled showed their seams.

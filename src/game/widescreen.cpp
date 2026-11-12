@@ -448,11 +448,15 @@ extern "C" int r2_wide_sprite(uint8_t* rdram, recomp_context* ctx) {
 // instead, as far from it as it was from the 4:3 screen's: one in the top half that starts in the screen's left third
 // and ends left of its right third from the left edge, one that ends in the right third and starts right of the left
 // third from the right edge (offset back by the screen's width), under a scissor that reaches the picture's edges, and
-// the alignment and scissor put back after it. A dialogue's speaker (Murfy's face) is an icon too, in the bottom left
-// beside the dialogue's box, which stays in the middle, and so does it. Text moves only with an icon it sits beside and on
-// its side of the screen, so a counter goes with its icon and everything else (a dialogue, the story, a countdown)
-// stays in the middle: a text entry (func_800C2F48 draws one, a sprite a letter) is given room for those commands
-// before it, filled in once its letters say where it is. us.toml's hooks call these, none at Original.
+// the alignment and scissor put back after it. A bar that isn't full is two sprites, its filled part and then its empty
+// rest, so each is placed by the whole bar's rectangle (its entry in the bars' table, from func_800BC53C's loop): placed
+// by its own, the air bar under water (17% to 62% across, under the health bar's 17% to 29%) drew its rest at the 4:3
+// place, apart from the filled part at the edge, until less than about a third of it was left. A dialogue's speaker
+// (Murfy's face) is an icon too, in the bottom left beside the dialogue's box, which stays in the middle, and so does
+// it. Text moves only with an icon it sits beside and on its side of the screen, so a counter goes with its icon and
+// everything else (a dialogue, the story, a countdown) stays in the middle: a text entry (func_800C2F48 draws one, a
+// sprite a letter) is given room for those commands before it, filled in once its letters say where it is. us.toml's
+// hooks call these, none at Original.
 struct HudRect {
     float x0, y0, x1, y1; // percent of the screen
     uint32_t origin;
@@ -464,6 +468,7 @@ static bool hud_pass = false, hud_icons = false, hud_sprite_aligned = false;
 static HudRect hud_anchored[32];
 static int hud_anchored_count = 0;
 static gpr hud_text_room = 0;
+static gpr hud_bar = 0; // the bar being drawn, its entry in the bars' table, 0 outside them
 static HudRect hud_text;
 
 // Writes, from at, the commands that draw what follows from origin under a scissor out to the picture's edges; returns
@@ -503,12 +508,22 @@ extern "C" void r2_hud_start() {
     hud_anchored_count = 0;
 }
 
+// Before func_800BC53C draws a bar, its entry in the bars' table (its rectangle first, x0, y0, x1, y1 in percent).
+extern "C" void r2_hud_bar(gpr entry) {
+    hud_bar = hud_pass ? entry : 0;
+}
+
+extern "C" void r2_hud_bars_end() {
+    hud_bar = 0;
+}
+
 extern "C" void r2_hud_icons_end() {
     hud_icons = false;
 }
 
 extern "C" void r2_hud_end() {
     hud_pass = hud_icons = false;
+    hud_bar = 0;
     hud_anchored_count = 0;
 }
 
@@ -534,10 +549,12 @@ extern "C" gpr r2_hud_sprite(uint8_t* rdram, gpr list, gpr rect, gpr screen) {
     if (!hud_icons) {
         return list;
     }
-    if (sprite.x0 < 100.0f / 3.0f && sprite.x1 < 200.0f / 3.0f && sprite.y1 <= 50.0f) {
+    const HudRect place = hud_bar == 0 ? sprite : HudRect{ load_f32(rdram, hud_bar), load_f32(rdram, hud_bar + 0x4),
+        load_f32(rdram, hud_bar + 0x8), load_f32(rdram, hud_bar + 0xC), ex_origin_none };
+    if (place.x0 < 100.0f / 3.0f && place.x1 < 200.0f / 3.0f && place.y1 <= 50.0f) {
         sprite.origin = ex_origin_left;
     }
-    else if (sprite.x1 > 200.0f / 3.0f && sprite.x0 > 100.0f / 3.0f) {
+    else if (place.x1 > 200.0f / 3.0f && place.x0 > 100.0f / 3.0f) {
         sprite.origin = ex_origin_right;
     }
     else {
