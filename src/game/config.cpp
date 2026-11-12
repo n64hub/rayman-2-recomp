@@ -1,6 +1,9 @@
 // The settings: RecompFrontend's General, Controls, Graphics, Sound and Mods tabs, with its default bindings. Its own
 // Graphics options carry what a recomp needs: Resolution and MS Anti-Aliasing (high resolution), Framerate
-// (interpolation to the display's rate) and Aspect Ratio and HUD Placement (widescreen).
+// (interpolation to the display's rate) and Aspect Ratio and HUD Placement (widescreen). The General tab leaves out
+// Rumble Strength, Gyro Sensitivity and Mouse Sensitivity: the game has no Rumble Pak support (no osMotor in its code,
+// no "Rumble Pak" in its ROM) and nothing in it reads the gyro or the mouse, so each would change nothing, and Mouse
+// Sensitivity above 0 (a Steam Deck's default) would only hold the cursor in the window.
 
 #include <filesystem>
 
@@ -14,11 +17,7 @@ void r2::init_config() {
         std::filesystem::create_directories(app_dir);
     }
 
-    recompui::config::GeneralTabOptions general_options{};
-    general_options.has_rumble_strength = true;
-    general_options.has_gyro_sensitivity = true;
-    general_options.has_mouse_sensitivity = true;
-    recompui::config::create_general_tab(general_options);
+    recompui::config::create_general_tab(recompui::config::GeneralTabOptions{});
     recompui::config::create_controls_tab();
     recompui::config::create_graphics_tab();
     recompui::config::create_sound_tab();

@@ -576,11 +576,13 @@ int main(int argc, char** argv) {
     // soon as a task fills it, is untried with this game.
     ultramodern::renderer::callbacks_t renderer_callbacks{
         .create_render_context = [](uint8_t* rdram, ultramodern::renderer::WindowHandle window_handle, bool developer_mode) {
-            if (const char* m = getenv("R2_RTR_TEST")) { // TEMP: off|late|exact
-                if (strcmp(m, "off") == 0) recompui::renderer::set_render_to_ram(false);
-                if (strcmp(m, "late") == 0) recompui::renderer::set_render_to_ram_late(true);
-                fprintf(stderr, "R2_RTR_TEST=%s\n", m);
-            }
+            // Render to RAM: RT64's exact copy, each display list's frame in RDRAM before the game goes on, on the page
+            // too, where each copy waits 5-6 ms for the browser's readback. The game's CPU writes into frames it drew:
+            // the scene transition blacks the last one out in blotches, a pass each retrace once the RDP is done, and
+            // RT64 shows those writes by comparing RDRAM with its copy (RT64_STRETCH_CPU_CHANGES, CMakeLists.txt). With
+            // the copy a list late, each of 7 transitions in a play wrote to a framebuffer whose copy was still pending
+            // (RT64's console report), where a black word written over a black one would get the frame instead.
+            recompui::renderer::set_render_to_ram(true);
             return recompui::renderer::create_render_context(rdram, window_handle, ultramodern::renderer::PresentationMode::SkipBuffering, developer_mode);
         },
     };
