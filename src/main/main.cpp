@@ -331,7 +331,11 @@ RspUcodeFunc* get_rsp_microcode(const OSTask* task) {
 extern "C" void recomp_entrypoint(uint8_t* rdram, recomp_context* ctx);
 gpr get_entrypoint_address();
 
+// RDRAM, for --input's change of level.
+static uint8_t* game_rdram = nullptr;
+
 static void on_init(uint8_t* rdram, recomp_context*) {
+    game_rdram = rdram;
     r2::map_code_sections();
 }
 
@@ -360,13 +364,20 @@ static std::string game_thread_name(const OSThread* t) {
 
 // --input <file> (development): scripted port 1 input for unattended runs. Each line is "<seconds> <buttons hex> [x y]",
 // seconds counted from the game's first input read, and the last line whose time has passed is held. Lines starting
-// with # are comments.
+// with # are comments. A line "<seconds> go <level>" changes level then, as tools/survey.js's go() does on the page:
+// the next level's name (lower case, as the game's table has it: learn_10) at 0x800E5D62 and mode 6 at 0x800E5D43, and
+// the game loads it as it does at a level's end, its scene transition included.
 struct ScriptedInput {
     double at;
     uint32_t buttons;
     float x, y;
 };
 static std::vector<ScriptedInput> input_script;
+struct ScriptedLevel {
+    double at;
+    std::string level;
+};
+static std::vector<ScriptedLevel> level_script;
 
 static void load_input_script(const char* path) {
     FILE* f = fopen(path, "r");
@@ -377,7 +388,11 @@ static void load_input_script(const char* path) {
     char line[256];
     while (fgets(line, sizeof(line), f) != nullptr) {
         ScriptedInput in{};
-        if (line[0] != '#' && sscanf(line, "%lf %x %f %f", &in.at, &in.buttons, &in.x, &in.y) >= 2) {
+        char level[30];
+        if (line[0] != '#' && sscanf(line, "%lf go %29s", &in.at, level) == 2) {
+            level_script.push_back({ in.at, level });
+        }
+        else if (line[0] != '#' && sscanf(line, "%lf %x %f %f", &in.at, &in.buttons, &in.x, &in.y) >= 2) {
             input_script.push_back(in);
         }
     }
@@ -386,9 +401,19 @@ static void load_input_script(const char* path) {
 
 static bool get_n64_input(int player_index, uint16_t* buttons_out, float* x_out, float* y_out) {
     bool ret = recompinput::profiles::get_n64_input(player_index, buttons_out, x_out, y_out);
-    if (!input_script.empty() && player_index == 0) {
+    if ((!input_script.empty() || !level_script.empty()) && player_index == 0) {
         static const auto start = std::chrono::steady_clock::now();
         double now = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+        static size_t next_level = 0;
+        if (next_level < level_script.size() && level_script[next_level].at <= now) {
+            uint8_t* rdram = game_rdram;
+            const std::string& level = level_script[next_level++].level;
+            for (int i = 0; i < 30; i++) {
+                MEM_B(i, (gpr)(int32_t)0x800E5D62) = i < (int)level.size() ? level[i] : 0;
+            }
+            MEM_B(0, (gpr)(int32_t)0x800E5D43) = 6;
+            fprintf(stderr, "--input: go %s at %.1f s\n", level.c_str(), now);
+        }
         for (const ScriptedInput& in : input_script) {
             if (in.at <= now) {
                 *buttons_out = (uint16_t)in.buttons;
@@ -551,6 +576,11 @@ int main(int argc, char** argv) {
     // soon as a task fills it, is untried with this game.
     ultramodern::renderer::callbacks_t renderer_callbacks{
         .create_render_context = [](uint8_t* rdram, ultramodern::renderer::WindowHandle window_handle, bool developer_mode) {
+            if (const char* m = getenv("R2_RTR_TEST")) { // TEMP: off|late|exact
+                if (strcmp(m, "off") == 0) recompui::renderer::set_render_to_ram(false);
+                if (strcmp(m, "late") == 0) recompui::renderer::set_render_to_ram_late(true);
+                fprintf(stderr, "R2_RTR_TEST=%s\n", m);
+            }
             return recompui::renderer::create_render_context(rdram, window_handle, ultramodern::renderer::PresentationMode::SkipBuffering, developer_mode);
         },
     };
