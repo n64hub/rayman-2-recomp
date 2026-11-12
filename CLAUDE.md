@@ -21,7 +21,7 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
 - `src/`: RecompFrontend's main (`src/main/main.cpp`, with the GameEntry), the code sections it gives the runtime
   (`src/main/register_overlays.cpp`), the natives the patches call (`src/game/recomp_api.cpp`), the Controller Pak
   (`src/game/controller_pak.cpp`), the libultra functions the runtime lacks (`src/game/libultra.cpp`), the scene
-  transition's wait (`src/game/transition.cpp`), the settings, and on Windows a stack trace on a crash (`src/main/crash_trace.cpp`).
+  transition's wait (`src/game/transition.cpp`), mouse look (`src/game/mouse_look.cpp`), the settings, and on Windows a stack trace on a crash (`src/main/crash_trace.cpp`).
 - `lib/`: upstream `rt64`, `N64ModernRuntime` and `RecompFrontend` at the commits N64Recomp-browser's web forks are
   built on, and `N64Recomp-browser` at a release tag. The web support every recomp's page shares is developed and
   documented there; `tools/build_n64recomp.sh` and `CMakeLists.txt` apply its `patches/` to the other three, and
@@ -59,5 +59,5 @@ one here.
 
 `docs/architecture.md` has the facts about the game the code can't say on its own: the code, spins, the idle watchdog,
 the RSP's done message, one frame a VI, the sound queue, an animation's last frame, microcodes, saves, the Expansion
-Pak, input, widescreen, interpolation, the intro's white fade and testing. Read its part before changing the
+Pak, input, the camera, widescreen, interpolation, the intro's white fade and testing. Read its part before changing the
 recompilation, a patch or a hook, and add a new finding there, not here.
