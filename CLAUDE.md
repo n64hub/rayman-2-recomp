@@ -48,6 +48,13 @@ This repo is the game: its recompilation, the hooks and patches over it, the des
   nothing about where anyone keeps ROMs.
 - GPL-3.0, as the recompilations it follows.
 
+## If the change reaches another repo, YOU make it
+
+This repo's work is the project's two Ubi Soft recompilations, this one and `donald-duck-goin-quackers-recomp`, which
+are checked and kept the same way. So a change the work needs in Goin' Quackers' repo is made in the same
+work, not handed on as work of its own: a PR there, from a checkout of its `main`, landed by whoever does the work like
+one here.
+
 ## How it fits together
 
 `docs/architecture.md` has the facts about the game the code can't say on its own: the code, spins, the idle watchdog,
