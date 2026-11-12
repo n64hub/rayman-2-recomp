@@ -8,3 +8,8 @@ file per submodule, `<submodule>-<n>-<what>.patch`, numbered after that submodul
   done once RT64 has read its display list, not as the task starts. The game changes what a list reads as soon as
   the RSP is done, so with the early message a slow renderer (lavapipe, a page on a busy host) read a list being
   rewritten: RT64 crashed reading it, or found no GBI for the task.
+- `rt64-1-cpu-writes-over-interpolated-frames.patch`: a present whose framebuffer the CPU has written into since the
+  list that drew it shows that framebuffer, not the frames RT64 interpolated from the list, which don't hold the CPU's
+  writes. With MSAA (2x by default) every frame shown at the display's rate came from those, so the scene transition,
+  which blacks out the last frame from the CPU, showed that frame still and then cut to black whenever the last frame
+  had been interpolated into two.

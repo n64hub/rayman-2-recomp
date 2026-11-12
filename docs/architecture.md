@@ -65,7 +65,10 @@ finding that explains the game's code goes here or beside that code.
   Original; a bar that isn't full is two sprites, its filled part and its rest, both placed by the whole bar (the air
   bar reaches past the screen's left third, so its rest alone went where a 4:3 screen has it). The scene transition, which the game blacks out from the CPU in blotches, is stretched across the picture by
   `RT64_STRETCH_CPU_CHANGES`, the blotches a third wider at 16:9, and `src/game/transition.cpp` keeps its map out of a
-  framebuffer that is still shown; `CMakeLists.txt` sets both options. It also joins the title logo's overlapping tiles
+  framebuffer that is still shown; `CMakeLists.txt` sets both options. The passes write the last frame the game drew,
+  which RT64 also shows interpolated at the display's rate, from copies that never see the CPU's writes: a present
+  carrying them shows the framebuffer itself (`runtime-patches/rt64-1-*`), or with MSAA the last frame stood still and
+  cut to black. It also joins the title logo's overlapping tiles
   at every aspect, each tile's clear edge given its neighbour's texels, which upscaled showed their seams.
 - **Interpolation.** The game moves some things only on its own frames, which RT64 moves on every frame drawn: its
   texture scrolls (the intro's sky, the language menu's water), masked tiles stepped a texel on some frames and not
