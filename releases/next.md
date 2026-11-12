@@ -1,1 +1,3 @@
 **Fixed:** in a wide window, the air bar under water no longer splits in two: the part of it that is used up was drawn apart from the rest, where a 4:3 screen would have it. Original (4:3) is unchanged.
+
+**Changed:** the General settings no longer offer Rumble Strength, Gyro Sensitivity or Mouse Sensitivity: the game has no Rumble Pak support and reads no gyro or mouse, so they changed nothing (Mouse Sensitivity only held the cursor in the window).

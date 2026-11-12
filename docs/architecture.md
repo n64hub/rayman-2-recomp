@@ -52,7 +52,10 @@ finding that explains the game's code goes here or beside that code.
   (`controller_pak.cpp`). Without it, a player pressing Start through the logos crashed the program.
 - **The Expansion Pak.** The game finds the runtime's 8 MB and says so at boot ("Expansion Pak detected!").
 - **Input.** RecompFrontend's default bindings. Keyboard: WASD the stick, Space A, Left Shift B, Q Z, R R, E L, Enter
-  Start, the arrows the C buttons. The game reads port 1 only.
+  Start, the arrows the C buttons, IJKL the D-pad. The game is for one player and reads port 1 only, so every pad and
+  the keyboard play port 1 (single-player mode, `main.cpp`): N64Recomp-browser's checklist item for a game of several
+  players, each controller its own port, doesn't apply. The game reads no Rumble Pak, gyro or mouse, so the General tab
+  has no options for them (`src/game/config.cpp`).
 - **Widescreen.** RecompFrontend's Graphics tab defaults to Aspect Ratio Expand, Resolution Auto and Framerate Display;
   RT64 widens the 3D. Original (Aspect Ratio Original) is the console's 4:3. A menu's backdrop (the pause menu's swirl,
   while 0x800C87D0 is set) is an opaque gradient at 4:3 over the frame's clear, a fill of the level's fog colour that
@@ -67,6 +70,9 @@ finding that explains the game's code goes here or beside that code.
   `RT64_STRETCH_CPU_CHANGES`, the blotches a third wider at 16:9, and `src/game/transition.cpp` keeps its map out of a
   framebuffer that is still shown; `CMakeLists.txt` sets both options. It also joins the title logo's overlapping tiles
   at every aspect, each tile's clear edge given its neighbour's texels, which upscaled showed their seams.
+- **Render to RAM.** RT64's exact copy of each frame into RDRAM, on the page too (`main.cpp` says why): the scene
+  transition's CPU writes go into the frame the RDP drew, after it is drawn, so neither off nor the copy a list late
+  (N64Recomp-browser's checklist, item 7) fits.
 - **Interpolation.** The game moves some things only on its own frames, which RT64 moves on every frame drawn: its
   texture scrolls (the intro's sky, the language menu's water), masked tiles stepped a texel on some frames and not
   others (rt64-web 08427aa), and its menu cursor, a butterfly whose vertices the CPU places anew each frame with no
@@ -77,5 +83,6 @@ finding that explains the game's code goes here or beside that code.
   console's capture shows it, and so does the desktop build at Framerate Original and Aspect Ratio Original.
 - **Testing.** `--boot` starts the game from the launcher's first frame once the ROM is stored, `--boot-after
   <seconds>` that long after it (a player who leaves the launcher open), `--window <w>x<h>` sizes the window,
-  `--input <file>` plays port 1 from a script of timed button states (`main.cpp` says the format), and on Windows
+  `--input <file>` plays port 1 from a script of timed button states and changes level at a time it names, as
+  `tools/survey.js` does on the page (`main.cpp` says the format), and on Windows
   `--stacks <seconds>` prints every thread's stack that long after start, for unattended runs and hangs.
