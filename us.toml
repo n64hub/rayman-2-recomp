@@ -140,15 +140,26 @@ func = "func_800976E0"
 before_vram = 0x800976E0
 text = "{ int r2_wide_sprite(uint8_t*, recomp_context*); if (r2_wide_sprite(rdram, ctx)) return; }"
 
-# The HUD's pass, func_800BC53C: its bars and icons (until func_800BC460 returns, at 0x800BC7EC) and then its text, from
-# func_800C2844, until it returns at 0x800BC824. Each bar, icon and letter is a sprite that func_80096EAC has the 2D
-# drawer (func_8009784C) write at 0x80097360 (the list in a0, its rectangle in a1, the screen in a3) and that ends the
-# list at 0x80097368 (v0), and func_800C2844 draws a text entry with func_800C2F48 at 0x800C29E8.
-# src/game/widescreen.cpp draws the HUD from the wide picture's edges there (none at Original).
+# The HUD's pass, func_800BC53C: its bars (the 8 of the table at 0x800EF6BC, 0x20 bytes each, s0 the one's offset, each
+# from 0x800BC5D8 once it is shown, until the loop ends at 0x800BC7E4) and icons (until func_800BC460 returns, at
+# 0x800BC7EC) and then its text, from func_800C2844, until it returns at 0x800BC824. Each bar, icon and letter is a
+# sprite that func_80096EAC has the 2D drawer (func_8009784C) write at 0x80097360 (the list in a0, its rectangle in a1,
+# the screen in a3) and that ends the list at 0x80097368 (v0), and func_800C2844 draws a text entry with func_800C2F48
+# at 0x800C29E8. src/game/widescreen.cpp draws the HUD from the wide picture's edges there (none at Original).
 [[patches.hook]]
 func = "func_800BC53C"
 before_vram = 0x800BC53C
 text = "{ void r2_hud_start(); r2_hud_start(); }"
+
+[[patches.hook]]
+func = "func_800BC53C"
+before_vram = 0x800BC5D8
+text = "{ void r2_hud_bar(gpr); r2_hud_bar((gpr)(int32_t)0x800EF6BC + ctx->r16); }"
+
+[[patches.hook]]
+func = "func_800BC53C"
+before_vram = 0x800BC7E4
+text = "{ void r2_hud_bars_end(); r2_hud_bars_end(); }"
 
 [[patches.hook]]
 func = "func_800BC53C"
