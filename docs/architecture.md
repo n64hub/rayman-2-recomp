@@ -54,8 +54,18 @@ finding that explains the game's code goes here or beside that code.
 - **Input.** RecompFrontend's default bindings. Keyboard: WASD the stick, Space A, Left Shift B, Q Z, R R, E L, Enter
   Start, the arrows the C buttons, IJKL the D-pad. The game is for one player and reads port 1 only, so every pad and
   the keyboard play port 1 (single-player mode, `main.cpp`): N64Recomp-browser's checklist item for a game of several
-  players, each controller its own port, doesn't apply. The game reads no Rumble Pak, gyro or mouse, so the General tab
-  has no options for them (`src/game/config.cpp`).
+  players, each controller its own port, doesn't apply. The game reads no Rumble Pak or gyro, so the General tab has no
+  options for them (`src/game/config.cpp`). Nor does it read a mouse: its Mouse Sensitivity is mouse look, which turns
+  the camera where the game keeps it (The camera).
+- **The camera.** The camera is a superobject, its pointer at 0x800E5FF8 (in learn_10, 0x80638A28). Its matrix (+0x20)
+  holds the camera's position (+0x4, +0x8, +0xC, z up) and three columns (+0x10, +0x1C, +0x28): the first level, the
+  side, the second the view's back and the third its up. Its engine object (+0x4) holds the camera's cineinfo (+0x10),
+  whose +0x28, +0x2C and +0x30 are the point it looks at, by Rayman; a C-Left or C-Right press sets a quarter
+  turn at +0x5C there (`func_800644FC`, from the game's scripts), which the camera swings through. The game reads the
+  matrix back each frame and goes on from it: behind Rayman (about 8.4 from that point), a camera turned about it stays
+  turned for the frame and then swings back behind him, as after a C press, and in first person (C-Up, about 1.1 from
+  it) a view turned in place stays turned, with nothing holding it to the stick's limits. Its first person's stick
+  looks down when pushed up. `src/game/mouse_look.cpp` turns it, as each frame starts (`us.toml`).
 - **Widescreen.** RecompFrontend's Graphics tab defaults to Aspect Ratio Expand, Resolution Auto and Framerate Display;
   RT64 widens the 3D. Original (Aspect Ratio Original) is the console's 4:3. A menu's backdrop (the pause menu's swirl,
   while 0x800C87D0 is set) is an opaque gradient at 4:3 over the frame's clear, a fill of the level's fog colour that
@@ -83,6 +93,6 @@ finding that explains the game's code goes here or beside that code.
   console's capture shows it, and so does the desktop build at Framerate Original and Aspect Ratio Original.
 - **Testing.** `--boot` starts the game from the launcher's first frame once the ROM is stored, `--boot-after
   <seconds>` that long after it (a player who leaves the launcher open), `--window <w>x<h>` sizes the window,
-  `--input <file>` plays port 1 from a script of timed button states and changes level at a time it names, as
-  `tools/survey.js` does on the page (`main.cpp` says the format), and on Windows
+  `--input <file>` plays port 1 from a script of timed button states and mouse motion and changes level at a time it
+  names, as `tools/survey.js` does on the page (`main.cpp` says the format), and on Windows
   `--stacks <seconds>` prints every thread's stack that long after start, for unattended runs and hangs.

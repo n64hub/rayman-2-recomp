@@ -20,4 +20,8 @@ namespace r2 {
     void map_code_sections();
 }
 
+// Mouse look (mouse_look.cpp): the mouse's motion since the last input poll, read at each one, or --input's.
+extern "C" void r2_poll_mouse();
+extern "C" void r2_add_mouse_motion(float x, float y);
+
 #endif

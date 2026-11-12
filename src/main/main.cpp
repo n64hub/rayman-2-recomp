@@ -1,5 +1,6 @@
 // Rayman 2: Recompiled on RecompFrontend: its launcher (Load ROM, Start Game), settings menus, input and RT64
-// render context. The natives the patches call are recomp_api.cpp, the settings config.cpp.
+// render context. The natives the patches call are recomp_api.cpp, the settings config.cpp, and each input poll hands
+// the mouse's motion to mouse_look.cpp.
 
 #include <cstdio>
 #include <cstring>
@@ -366,7 +367,8 @@ static std::string game_thread_name(const OSThread* t) {
 // seconds counted from the game's first input read, and the last line whose time has passed is held. Lines starting
 // with # are comments. A line "<seconds> go <level>" changes level then, as tools/survey.js's go() does on the page:
 // the next level's name (lower case, as the game's table has it: learn_10) at 0x800E5D62 and mode 6 at 0x800E5D43, and
-// the game loads it as it does at a level's end, its scene transition included.
+// the game loads it as it does at a level's end, its scene transition included. A line "<seconds> mouse <x> <y>" moves
+// the mouse that many pixels at each input read from then until the next mouse line, as a Mouse Sensitivity of 100%.
 struct ScriptedInput {
     double at;
     uint32_t buttons;
@@ -378,6 +380,7 @@ struct ScriptedLevel {
     std::string level;
 };
 static std::vector<ScriptedLevel> level_script;
+static std::vector<ScriptedInput> mouse_script;
 
 static void load_input_script(const char* path) {
     FILE* f = fopen(path, "r");
@@ -392,6 +395,9 @@ static void load_input_script(const char* path) {
         if (line[0] != '#' && sscanf(line, "%lf go %29s", &in.at, level) == 2) {
             level_script.push_back({ in.at, level });
         }
+        else if (line[0] != '#' && sscanf(line, "%lf mouse %f %f", &in.at, &in.x, &in.y) == 3) {
+            mouse_script.push_back(in);
+        }
         else if (line[0] != '#' && sscanf(line, "%lf %x %f %f", &in.at, &in.buttons, &in.x, &in.y) >= 2) {
             input_script.push_back(in);
         }
@@ -401,7 +407,7 @@ static void load_input_script(const char* path) {
 
 static bool get_n64_input(int player_index, uint16_t* buttons_out, float* x_out, float* y_out) {
     bool ret = recompinput::profiles::get_n64_input(player_index, buttons_out, x_out, y_out);
-    if ((!input_script.empty() || !level_script.empty()) && player_index == 0) {
+    if ((!input_script.empty() || !level_script.empty() || !mouse_script.empty()) && player_index == 0) {
         static const auto start = std::chrono::steady_clock::now();
         double now = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
         static size_t next_level = 0;
@@ -422,8 +428,23 @@ static bool get_n64_input(int player_index, uint16_t* buttons_out, float* x_out,
                 ret = true;
             }
         }
+        const ScriptedInput* mouse = nullptr;
+        for (const ScriptedInput& in : mouse_script) {
+            if (in.at <= now) {
+                mouse = &in;
+            }
+        }
+        if (mouse != nullptr && (mouse->x != 0.0f || mouse->y != 0.0f)) {
+            r2_add_mouse_motion(mouse->x, mouse->y);
+        }
     }
     return ret;
+}
+
+// RecompFrontend's poll, and the mouse's motion since the last one for mouse look.
+static void poll_input() {
+    recompinput::poll_inputs();
+    r2_poll_mouse();
 }
 
 // --boot (development): start the game on the launcher's first frame, as its Start Game option does, so a run
@@ -600,7 +621,7 @@ int main(int argc, char** argv) {
     };
 
     ultramodern::input::callbacks_t input_callbacks{
-        .poll_input = recompinput::poll_inputs,
+        .poll_input = poll_input,
         .get_input = get_n64_input,
         .set_rumble = recompinput::set_rumble,
         .get_connected_device_info = get_connected_device_info,
