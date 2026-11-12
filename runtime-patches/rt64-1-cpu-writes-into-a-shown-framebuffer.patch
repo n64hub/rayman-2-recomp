@@ -1,8 +1,22 @@
 diff --git a/src/hle/rt64_present_queue.cpp b/src/hle/rt64_present_queue.cpp
-index ae697ac..bfed6b1 100644
+index ae697ac..a989585 100644
 --- a/src/hle/rt64_present_queue.cpp
 +++ b/src/hle/rt64_present_queue.cpp
-@@ -220,7 +220,18 @@ namespace RT64 {
+@@ -176,6 +176,13 @@ namespace RT64 {
+             Framebuffer *viFb = nullptr;
+             if (!viewRDRAM) {
+                 viFb = fbManager.find(present.screenVI.fbAddress());
++
++                // A framebuffer at the VI's address that isn't as wide as the VI's or of its pixel size isn't the one
++                // the VI shows: the VI's check in State::updateScreen gives it none of the CPU's changes, so it is shown
++                // from RAM, as when there is none. Shown, it stood still over what the CPU drew (a scene transition).
++                if ((viFb != nullptr) && ((viFb->width != present.screenVI.fbSize().x) || (viFb->siz != present.screenVI.fbSiz()))) {
++                    viFb = nullptr;
++                }
+             }
+ 
+             Framebuffer *presentFb = viFb;
+@@ -220,7 +227,18 @@ namespace RT64 {
                      }
                  }
  
@@ -22,7 +36,7 @@ index ae697ac..bfed6b1 100644
                      framesToPresent = frameCounters.count;
                  }
                  else {
-@@ -850,6 +861,22 @@ namespace RT64 {
+@@ -850,6 +868,22 @@ namespace RT64 {
  #           endif
  
                  if (skipPresent) {

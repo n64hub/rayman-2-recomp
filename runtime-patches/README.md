@@ -12,5 +12,8 @@ file per submodule, `<submodule>-<n>-<what>.patch`, numbered after that submodul
   the screen. A present carrying those writes shows that framebuffer, not the frames RT64 interpolated from the list that
   drew it, which don't hold them: with MSAA (2x by default) every frame shown at the display's rate came from those. And
   a present dropped for a newer one still writes its changes into the framebuffer: each is RAM's difference from the
-  one before, so a dropped one was lost for good. The scene transition, which blacks out the last frame from the CPU,
-  showed that frame still and cut to black, or stopped its blotches partway.
+  one before, so a dropped one was lost for good. And a framebuffer at the VI's address that isn't as wide as the VI's or
+  of its pixel size is shown from RAM, as when RT64 has none there: the VI gives it none of the CPU's changes, and it
+  held a picture from before. The scene transition, which blacks out the last frame from the CPU, showed that frame
+  still and cut to black, or stopped its blotches partway; and the title screen, at the address of the 3D frames at
+  another width, showed the last 3D frame until the next level's transition cut it to black.
