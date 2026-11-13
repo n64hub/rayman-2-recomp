@@ -450,8 +450,10 @@ extern "C" int r2_wide_sprite(uint8_t* rdram, recomp_context* ctx) {
 // third from the right edge (offset back by the screen's width), under a scissor that reaches the picture's edges, and
 // the alignment and scissor put back after it. A bar that isn't full is two sprites, its filled part and then its empty
 // rest, so each is placed by the whole bar's rectangle (its entry in the bars' table, from func_800BC53C's loop): placed
-// by its own, the air bar under water (17% to 62% across, under the health bar's 17% to 29%) drew its rest at the 4:3
-// place, apart from the filled part at the edge, until less than about a third of it was left. A dialogue's speaker
+// by its own, a bar reaching past the screen's left third drew its rest at the 4:3 place, apart from the filled part at
+// the edge, while that rest started past the third: the air bar under water (17% to 62% across) until less than about a
+// third of it was left, and the health bar (17% to 29% at the start, longer later in the game: a player's reached 58%)
+// whenever it wasn't full. A dialogue's speaker
 // (Murfy's face) is an icon too, in the bottom left beside the dialogue's box, which stays in the middle, and so does
 // it. Text moves only with an icon it sits beside and on its side of the screen, so a counter goes with its icon and
 // everything else (a dialogue, the story, a countdown) stays in the middle: a text entry (func_800C2F48 draws one, a
