@@ -1,11 +1,11 @@
 diff --git a/src/hle/rt64_present_queue.cpp b/src/hle/rt64_present_queue.cpp
-index ae697ac..a989585 100644
+index 3ea827e..5448fa4 100644
 --- a/src/hle/rt64_present_queue.cpp
 +++ b/src/hle/rt64_present_queue.cpp
-@@ -176,6 +176,13 @@ namespace RT64 {
-             Framebuffer *viFb = nullptr;
-             if (!viewRDRAM) {
-                 viFb = fbManager.find(present.screenVI.fbAddress());
+@@ -181,6 +181,13 @@ namespace RT64 {
+                 // (FramebufferManager::shownAddress()). Taken on a line of its own, off the one Jet Force Gemini's page
+                 // patches around.
+                 viFb = (viFb != nullptr) ? viFb : fbManager.find(fbManager.shownAddress(present.screenVI));
 +
 +                // A framebuffer at the VI's address that isn't as wide as the VI's or of its pixel size isn't the one
 +                // the VI shows: the VI's check in State::updateScreen gives it none of the CPU's changes, so it is shown
@@ -16,7 +16,7 @@ index ae697ac..a989585 100644
              }
  
              Framebuffer *presentFb = viFb;
-@@ -220,7 +227,18 @@ namespace RT64 {
+@@ -225,7 +232,18 @@ namespace RT64 {
                      }
                  }
  
@@ -33,10 +33,10 @@ index ae697ac..a989585 100644
 +                }
 +
 +                if (presentFb->interpolationEnabled && !cpuChangedPresentFb) {
-                     framesToPresent = frameCounters.count;
-                 }
-                 else {
-@@ -850,6 +868,22 @@ namespace RT64 {
+                     // The workload thread resizes the manager's targets as it draws (RenderTarget::resize() frees their
+                     // textures), so where this frame's own target is the first one drawn (without MSAA, or with nothing
+                     // interpolated) it is held as for a frame with none interpolated, and let go once that frame is drawn,
+@@ -866,6 +884,22 @@ namespace RT64 {
  #           endif
  
                  if (skipPresent) {
