@@ -93,7 +93,13 @@ finding that explains the game's code goes here or beside that code.
   texture scrolls (the intro's sky, the language menu's water), masked tiles stepped a texel on some frames and not
   others (rt64-web 08427aa), and its menu cursor, a butterfly whose vertices the CPU places anew each frame with no
   matrix ID (rt64-web a03baa2). The butterfly's light flickering between two levels is the game's own: vertex
-  colours it writes, no RSP light, the same at Original.
+  colours it writes, no RSP light, the same at Original. The game multiplies its camera into every modelview on the
+  CPU and loads a bare perspective, so RT64 saw an identity view: its camera-cut test (`RT64_SKIP_CAMERA_CUTS`) never
+  fired, and at a cutscene's cut the frames between drew the camera halfway between the two shots.
+  `src/game/camera_view.cpp` gives RT64 the view through the extended GBI's view matrix, the inverse of the camera's,
+  which draws the same picture with the world standing still: `func_8009989C` sets a camera up, the camera object at
+  0x800CF2E0 holding its view (translation +0x10, rotation rows +0x1C), in world units, 32 of the display list's
+  units to one. With it, the frames at a cut pair nothing and show the new shot.
 - **The intro's white fade.** As "Ubi Soft presents" fades out, the intro story cuts to white and its next shot of the
   sea comes up through a white fog in about 0.6 s, "PRESENTS" still fading over it. That is the game's own: a PAL
   console's capture shows it, and so does the desktop build at Framerate Original and Aspect Ratio Original.

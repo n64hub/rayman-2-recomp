@@ -9,9 +9,10 @@
 // inverse of the game's view, the world stands still where it stands still and the camera is the view.
 //
 // func_8009989C sets a camera up for a frame (us.toml's hooks): the camera object it is given, or the one before where
-// it is given none, which it keeps at 0x800CF2E0 either way, holds its view at +0xC, the translation at +0x10 and the rotation's rows at +0x1C, in world units, and the viewport's own display
-// list at +0x8, which the frame's list calls before what the camera draws (its viewport, perspective normal and
-// projection, then G_ENDDL), leaves room for three commands before the projection's Mtx at +0x48. The display list's
+// it is given none, which it keeps at 0x800CF2E0 either way, holds its view at +0xC, the translation at +0x10 and the
+// rotation's rows at +0x1C, in world units, and the viewport's own display list at +0x8, which the frame's list calls
+// before what the camera draws (its viewport, perspective normal and projection, then G_ENDDL), leaves room for three
+// commands before the projection's Mtx at +0x48. The display list's
 // units are 32 to a world unit, so its view is that one with the translation times 32. Where the list's end is written,
 // this puts gEXEnable and gEXSetViewMatrixFloat in its place, the end after them, and the matrix in a slot of
 // view_slots_start that is the viewport's for good: RT64 reads it as it reads the list, and the game writes the
