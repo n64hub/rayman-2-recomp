@@ -82,6 +82,10 @@ set(RT64_STRETCH_CPU_CHANGES TRUE)
 # (src/game/widescreen.cpp), far past the framebuffer's own: RT64_SCISSOR_INSIDE_FRAMEBUFFER, on with Emscripten and
 # here too, counts it only to the frame's edges, so the 3D of a frame with one is still widened.
 set(RT64_SCISSOR_INSIDE_FRAMEBUFFER ON)
+# A camera that cut to another shot between two of the game's frames pairs nothing across the cut, so the frames RT64
+# draws between show the new shot, not the world halfway between the two (on with Emscripten): RT64 sees the camera
+# from the view src/game/camera_view.cpp gives it.
+set(RT64_SKIP_CAMERA_CUTS ON)
 add_compile_definitions(HLSL_CPU)
 
 if (WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -210,6 +214,7 @@ target_sources(Rayman2Recompiled PRIVATE
     ${CMAKE_SOURCE_DIR}/src/main/main.cpp
     ${CMAKE_SOURCE_DIR}/src/main/crash_trace.cpp
     ${CMAKE_SOURCE_DIR}/src/main/register_overlays.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/camera_view.cpp
     ${CMAKE_SOURCE_DIR}/src/game/config.cpp
     ${CMAKE_SOURCE_DIR}/src/game/controller_pak.cpp
     ${CMAKE_SOURCE_DIR}/src/game/libultra.cpp

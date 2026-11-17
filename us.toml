@@ -130,6 +130,13 @@ func = "func_8009989C"
 before_vram = 0x80099DF8
 text = "{ void r2_widen_cull_planes(uint8_t*, gpr); r2_widen_cull_planes(rdram, ctx->r16); }"
 
+# The camera's view, for RT64 (src/game/camera_view.cpp): func_8009989C writes the end of the viewport's display list
+# (s1) at v0 at 0x80099FC8, its second word in the delay slot of 0x80099FCC's call, and camera_view.cpp puts the view
+# before it there.
+[[patches.hook]]
+func = "func_8009989C"
+before_vram = 0x80099FCC
+text = "{ gpr r2_camera_view(uint8_t*, gpr, gpr); ctx->r2 = r2_camera_view(rdram, ctx->r17, ctx->r2); }"
 # The 2D drawer, func_8009784C, writes a scaled texture rectangle's command (at a1) from its rectangle struct (s1) at
 # 0x800981FC, where src/game/widescreen.cpp makes a full-screen one (the fades) span the screen so RT64 stretches it
 # across a wide picture, and keeps the tiles of a big image (the title logo's) from overlapping and their texture

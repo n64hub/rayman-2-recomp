@@ -1,5 +1,5 @@
 RAMBASE  = 0x80801000; /* Used to hold any new symbols */
-PATCH_RAM_END = 0x81000000; /* Amount of extra ram allocated by recomp */
+PATCH_RAM_END = 0x80FFF000; /* The extra ram allocated by recomp ends at 0x81000000, its last 4 KB src/game/camera_view.cpp's */
 
 MEMORY {
     extram : ORIGIN = RAMBASE, LENGTH = 64M
