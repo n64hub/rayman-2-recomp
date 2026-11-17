@@ -1,0 +1,43 @@
+diff --git a/src/hle/rt64_rigid_body.cpp b/src/hle/rt64_rigid_body.cpp
+index fd8b3eb..c048edd 100644
+--- a/src/hle/rt64_rigid_body.cpp
++++ b/src/hle/rt64_rigid_body.cpp
+@@ -30,10 +30,12 @@ namespace RT64 {
+             float dotCurVel = std::max(hlslpp::dot(linearVelocity / std::max(prevVelMag, Epsilon), curLinearVelocity / std::max(curVelMag, Epsilon))[0], Epsilon);
+             curVelMag /= dotCurVel;
+             lerpTranslation = (curVelMag < VelocityTolerance) || (curVelMag / std::max(prevVelMag, Epsilon)) < MagnitudeThreshold;
++            translationJumped = !lerpTranslation;
+             linearVelocity = curLinearVelocity;
+         }
+         else {
+             lerpTranslation = (componentInterpolation == G_EX_COMPONENT_INTERPOLATE);
++            translationJumped = false;
+             linearVelocity = 0.0f;
+         }
+     }
+@@ -52,8 +54,11 @@ namespace RT64 {
+             float curAngularVelocity = std::acos((diffTrace - 1.0f) / 2.0f);
+             angularVelocity = curAngularVelocity;
+ 
+-            // FIXME: Defaults to always interpolate.
+-            lerpRotation = true;
++            // Interpolated, unless its translation jumped (updateLinear, called first): one that moved too far, or turned
++            // back, is drawn where it is, all of it. With its rotation interpolated, a body whose origin is far from what
++            // it draws (a level's mesh) swung that by half its turn about the origin for a frame, from where its translation
++            // put it.
++            lerpRotation = !translationJumped;
+ 
+             // If scale or skew are also set to auto, use the result of rotation auto calculation for their value as well.
+             if (scaleInterpolation == G_EX_COMPONENT_AUTO) {
+diff --git a/src/hle/rt64_rigid_body.h b/src/hle/rt64_rigid_body.h
+index 778e08b..7fd0c21 100644
+--- a/src/hle/rt64_rigid_body.h
++++ b/src/hle/rt64_rigid_body.h
+@@ -14,6 +14,7 @@ namespace RT64 {
+         float angularVelocity = 0.0f;
+         uint8_t transformIndex = 0;
+         bool lerpTranslation = false;
++        bool translationJumped = false;
+         bool lerpRotation = false;
+         bool lerpScale = false;
+         bool lerpSkew = false;
