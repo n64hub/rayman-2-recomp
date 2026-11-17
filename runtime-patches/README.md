@@ -22,3 +22,8 @@ file per submodule, `<submodule>-<n>-<what>.patch`, numbered after that submodul
   The cutscenes hold each shot still and cut 4-7.5 of them away, turned 27-40 degrees, under the test's 8 and 45, so the
   frames between drew the camera through the trees between two shots. What the frame before's step was is now -1 where
   it isn't known (after a cut), not 0, so a flyover's second frame after a cut isn't taken for one.
+- `rt64-3-a-body-whose-translation-jumped-is-drawn-whole.patch`: under RT64's automatic interpolation, a transform
+  whose translation isn't interpolated (it moved too far, or turned back) isn't rotated halfway either, but drawn where
+  it is. Its rotation was always interpolated, so in the Woods of Light's opening shake, where every world matrix turns
+  back and forth each frame, the level's mesh, its origin far from its ground, swung about that origin in the frames
+  between and most of the ground left the picture.

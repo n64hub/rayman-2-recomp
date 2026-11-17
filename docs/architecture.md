@@ -106,6 +106,14 @@ finding that explains the game's code goes here or beside that code.
   between the cutscenes' still shots, the eye jumping 4-7.5 near plane distances (one world unit each) and turning
   27-40 degrees, under its 8 and 45; `runtime-patches/rt64-2` also calls a cut a jump of more than 3 from a camera that
   stood still the frame before, where the game's cameras moved off at most 1.5 and its flyovers move 4 a frame.
+  As the Woods of Light opens, the camera shakes, pitching a few degrees up and down about where it stands each frame.
+  The camera object and the camera's superobject pitch one way, but the modelviews the frame's models are drawn with pitch
+  the other: their view is the camera's at rest turned back by as much again, and is held nowhere found in RAM. So each
+  world matrix RT64 takes from the camera object's view turns by twice the shake each frame, back and forth. RT64's
+  automatic interpolation held a translation that turned back (it reads that as too fast) but still interpolated the
+  rotation, so the level's mesh, whose origin is far from the ground it draws, swung by half its turn about that origin
+  in the frames between: most of the ground left the picture for a frame. `runtime-patches/rt64-3` draws a body
+  whose translation jumped where it is, its rotation not interpolated either.
 - **The intro's white fade.** As "Ubi Soft presents" fades out, the intro story cuts to white and its next shot of the
   sea comes up through a white fog in about 0.6 s, "PRESENTS" still fading over it. That is the game's own: a PAL
   console's capture shows it, and so does the desktop build at Framerate Original and Aspect Ratio Original.

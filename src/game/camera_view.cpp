@@ -23,6 +23,10 @@
 // moved the view a frame before the models: RT64 found the cut a frame early, and the frames between the next two drew
 // the world swept from the old shot's place to the new one's, the camera halfway between them as before. The first call
 // for a viewport hands its own.
+//
+// It is not always the view the models were drawn with: in a camera shake (the Woods of Light's opening) they pitch
+// the other way from the camera object, so the world RT64 finds turns back and forth each frame, which RT64 draws whole
+// rather than halfway (runtime-patches/rt64-3, Interpolation in docs/architecture.md).
 
 #include <cmath>
 #include <cstdint>
