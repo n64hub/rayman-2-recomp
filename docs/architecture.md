@@ -99,7 +99,10 @@ finding that explains the game's code goes here or beside that code.
   `src/game/camera_view.cpp` gives RT64 the view through the extended GBI's view matrix, the inverse of the camera's,
   which draws the same picture with the world standing still: `func_8009989C` sets a camera up, the camera object at
   0x800CF2E0 holding its view (translation +0x10, rotation rows +0x1C), in world units, 32 of the display list's
-  units to one. With it, the frames at a cut pair nothing and show the new shot. RT64's test still missed the cuts
+  units to one. The camera object already holds the next frame's view as the viewport is set up, a frame ahead of the
+  models the frame draws, so RT64 is given the view read at the call before: given the camera's own, the view cut a
+  frame before the models, and the frames between the next two drew the world swept from one shot to the other. With
+  it, the frames at a cut pair nothing and show the new shot. RT64's test still missed the cuts
   between the cutscenes' still shots, the eye jumping 4-7.5 near plane distances (one world unit each) and turning
   27-40 degrees, under its 8 and 45; `runtime-patches/rt64-2` also calls a cut a jump of more than 3 from a camera that
   stood still the frame before, where the game's cameras moved off at most 1.5 and its flyovers move 4 a frame.

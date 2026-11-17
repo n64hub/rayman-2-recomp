@@ -17,6 +17,12 @@
 // this puts gEXEnable and gEXSetViewMatrixFloat in its place, the end after them, and the matrix in a slot of
 // view_slots_start that is the viewport's for good: RT64 reads it as it reads the list, and the game writes the
 // viewport's Mtx beside it no sooner either.
+//
+// When it sets the viewport up the camera object already holds the next frame's view, so the view handed to RT64 is the
+// one read at the viewport's call before, the view the frame's models were drawn with. Given the camera's own, a cut
+// moved the view a frame before the models: RT64 found the cut a frame early, and the frames between the next two drew
+// the world swept from the old shot's place to the new one's, the camera halfway between them as before. The first call
+// for a viewport hands its own.
 
 #include <cmath>
 #include <cstdint>
@@ -38,6 +44,19 @@ static constexpr uint32_t ex_enable_w1 = (1u << 28) | 0x64u;
 static constexpr uint32_t ex_set_view_matrix_float_w0 = (0x64u << 24) | 0x2Eu;
 static constexpr uint32_t g_enddl = 0xB8000000;
 
+// A view as func_8009989C finds it in the camera object: rows r and translation t, in the display list's units.
+struct View {
+    float r[3][3];
+    float t[3];
+};
+
+// A viewport's slot, and the view read at its call before (held), which this call hands to RT64.
+struct Slot {
+    uint32_t address;
+    bool held = false;
+    View view = {};
+};
+
 static float load_f32(uint8_t* rdram, gpr addr) {
     int32_t bits = MEM_W(0, addr);
     float value;
@@ -58,14 +77,14 @@ extern "C" gpr r2_camera_view(uint8_t* rdram, gpr viewport, gpr end) {
         return end;
     }
 
-    static std::unordered_map<uint32_t, uint32_t> slots;
+    static std::unordered_map<uint32_t, Slot> slots;
     auto slot = slots.find((uint32_t)viewport);
     if (slot == slots.end()) {
         const uint32_t next = view_slots_start + (uint32_t)slots.size() * view_slot_size;
         if (next + view_slot_size > view_slots_end) {
             return end;
         }
-        slot = slots.emplace((uint32_t)viewport, next).first;
+        slot = slots.emplace((uint32_t)viewport, Slot{ next }).first;
     }
 
     // The view, rows r and translation t (row vectors, as RT64's matrices: a point p goes to p * r + t), in the list's
@@ -74,13 +93,26 @@ extern "C" gpr r2_camera_view(uint8_t* rdram, gpr viewport, gpr end) {
     if ((uint32_t)camera < 0x80000000u || (uint32_t)camera >= 0x80800000u) {
         return end;
     }
-    float r[3][3], t[3];
+    View view;
     for (int i = 0; i < 3; i++) {
-        t[i] = load_f32(rdram, camera + 0x10 + i * 4) * list_units_per_world_unit;
+        view.t[i] = load_f32(rdram, camera + 0x10 + i * 4) * list_units_per_world_unit;
         for (int j = 0; j < 3; j++) {
-            r[i][j] = load_f32(rdram, camera + 0x1C + i * 0xC + j * 4);
+            view.r[i][j] = load_f32(rdram, camera + 0x1C + i * 0xC + j * 4);
         }
     }
+    // The view this frame's models were drawn with is the one read at the call before: the camera object already
+    // holds the next frame's view when the viewport is set up (Interpolation, docs/architecture.md).
+    if (slot->second.held) {
+        const View current = view;
+        view = slot->second.view;
+        slot->second.view = current;
+    }
+    else {
+        slot->second.view = view;
+        slot->second.held = true;
+    }
+    float (&r)[3][3] = view.r;
+    float (&t)[3] = view.t;
     const float det = r[0][0] * (r[1][1] * r[2][2] - r[1][2] * r[2][1]) - r[0][1] * (r[1][0] * r[2][2] - r[1][2] * r[2][0]) +
         r[0][2] * (r[1][0] * r[2][1] - r[1][1] * r[2][0]);
     if (!std::isfinite(det) || std::fabs(det) < 1e-6f) {
@@ -94,7 +126,7 @@ extern "C" gpr r2_camera_view(uint8_t* rdram, gpr viewport, gpr end) {
         }
     }
 
-    const gpr matrix = (gpr)(int32_t)slot->second;
+    const gpr matrix = (gpr)(int32_t)slot->second.address;
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             store_f32(rdram, matrix + (i * 4 + j) * 4, inv[i][j]);
@@ -109,7 +141,7 @@ extern "C" gpr r2_camera_view(uint8_t* rdram, gpr viewport, gpr end) {
     MEM_W(0x0, end) = (int32_t)ex_enable_w0;
     MEM_W(0x4, end) = (int32_t)ex_enable_w1;
     MEM_W(0x8, end) = (int32_t)ex_set_view_matrix_float_w0;
-    MEM_W(0xC, end) = (int32_t)slot->second;
+    MEM_W(0xC, end) = (int32_t)slot->second.address;
     MEM_W(0x10, end) = (int32_t)g_enddl;
     return end + 0x10;
 }
