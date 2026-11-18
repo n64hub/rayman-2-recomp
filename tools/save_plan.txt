@@ -1,0 +1,12 @@
+# The save run of the save check by machine on the Linux build (docs/architecture.md, Testing; with
+# tools/load_plan.txt). Once the level is "menu" (its name at 0x800E5D44, compared in upper case), A every 1.5 s, each
+# press a step on from the last: English on the language menu a new profile opens on, NEW GAME, the first slot, and
+# the name it offers, AAA, which starts the game and writes saves/controllerpak_1.mpk. The presses go on until the
+# slot's line, "AAA 000.0", is in RDRAM, which it is only once the game is saved (an empty slot reads "---"): a press
+# a menu missed as it opened costs a press, not the run. The name is not typed: the name screen repeats a direction
+# held 200 ms and sometimes misses one held 100 ms.
+0 until 0x800E5D44 0xDFDFDFDF 0x4D454E55 90 Enter
+3 find saved 0x41414120,0x3030302E 60 Space
+3.5 saves changed 15
+5 shot started
+6 end
