@@ -121,3 +121,5 @@ finding that explains the game's code goes here or beside that code.
   `--input <file>` plays port 1 from a script of timed button states and mouse motion and changes level at a time it
   names, as `tools/survey.js` does on the page (`main.cpp` says the format), and on Windows
   `--stacks <seconds>` prints every thread's stack that long after start, for unattended runs and hangs.
+  `tools/soak_plan.txt` plays one round of the game's menus and scenes on its Linux build, for a crash or a hang (its
+  header says how).
