@@ -121,3 +121,7 @@ finding that explains the game's code goes here or beside that code.
   `--input <file>` plays port 1 from a script of timed button states and mouse motion and changes level at a time it
   names, as `tools/survey.js` does on the page (`main.cpp` says the format), and on Windows
   `--stacks <seconds>` prints every thread's stack that long after start, for unattended runs and hangs.
+  The Controller Pak save and a restart are checked by machine on the Linux build, with `saves/` and the pak behind
+  symlinks: `tools/save_plan.txt` is the save run's plan (a new game named BD9 in the first slot) and
+  `tools/load_plan.txt` the load run's after the restart (the slot's line read off the pak as the game boots, the
+  pak's bytes the same until a second game is saved, written through the links).
