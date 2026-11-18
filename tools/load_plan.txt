@@ -1,19 +1,19 @@
 # The load run of the save check (docs/architecture.md, Testing), after tools/save_plan.txt, the program started again
-# in the same folder: the game reads the pak's saves as it boots, and the first slot's line, "BD9 000.0" (at
+# in the same folder: the game reads the pak's saves as it boots, and the first slot's line, "B9B 000.0" (at
 # 0x800C87AC, word-aligned), is in RDRAM by the language menu only if it came off the pak. Nothing is written by then.
 # Then a second game, in the second slot under its own name, BBB: A to English, A to NEW GAME, down to the second slot,
 # A to its name and A to start, written through the check's links, and its line found.
 0 until 0x800E5D44 0xDFDFDFDF 0x4D454E55 90 Enter
-1 find loaded 0x42443920,0x3030302E 20
+1 find loaded 0x42394220,0x3030302E 20
 7 shot languages
 7.5 saves same
-8 key Space 100
-10.5 key Space 100
-13 key S 100
+8 key Space 200
+10.5 key Space 200
+13 key S 200
 14.5 shot slots
-15 key Space 100
+15 key Space 200
 17.5 shot name
-18 key Space 100
+18 key Space 200
 19.5 find second 0x42424220,0x3030302E 10
 20 saves changed 15
 22 shot started
