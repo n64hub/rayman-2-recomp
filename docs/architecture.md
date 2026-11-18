@@ -53,10 +53,9 @@ finding that explains the game's code goes here or beside that code.
 - **The Expansion Pak.** The game finds the runtime's 8 MB and says so at boot ("Expansion Pak detected!").
 - **Input.** RecompFrontend's default bindings. Keyboard: WASD the stick, Space A, Left Shift B, Q Z, R R, E L, Enter
   Start, the arrows the C buttons, IJKL the D-pad. The game is for one player and reads port 1 only, so every pad and
-  the keyboard play port 1 (single-player mode, `main.cpp`): N64Recomp-browser's checklist item for a game of several
-  players, each controller its own port, doesn't apply. The game reads no Rumble Pak or gyro, so the General tab has no
-  options for them (`src/game/config.cpp`). Nor does it read a mouse: its Mouse Sensitivity is mouse look, which turns
-  the camera where the game keeps it (The camera).
+  the keyboard play port 1 (single-player mode, `main.cpp`), not each controller its own port. The game reads no Rumble
+  Pak or gyro, so the General tab has no options for them (`src/game/config.cpp`). Nor does it read a mouse: its Mouse
+  Sensitivity is mouse look, which turns the camera where the game keeps it (The camera).
 - **The camera.** The camera is a superobject, its pointer at 0x800E5FF8 (in learn_10, 0x80638A28). Its matrix (+0x20)
   holds the camera's position (+0x4, +0x8, +0xC, z up) and three columns (+0x10, +0x1C, +0x28): the first level, the
   side, the second the view's back and the third its up. Its engine object (+0x4) holds the camera's cineinfo (+0x10),
@@ -88,7 +87,7 @@ finding that explains the game's code goes here or beside that code.
   at every aspect, each tile's clear edge given its neighbour's texels, which upscaled showed their seams.
 - **Render to RAM.** RT64's exact copy of each frame into RDRAM, on the page too (`main.cpp` says why): the scene
   transition's CPU writes go into the frame the RDP drew, after it is drawn, so neither off nor the copy a list late
-  (N64Recomp-browser's checklist, item 7) fits.
+  fits.
 - **Interpolation.** The game moves some things only on its own frames, which RT64 moves on every frame drawn: its
   texture scrolls (the intro's sky, the language menu's water), masked tiles stepped a texel on some frames and not
   others (rt64-web 08427aa), and its menu cursor, a butterfly whose vertices the CPU places anew each frame with no

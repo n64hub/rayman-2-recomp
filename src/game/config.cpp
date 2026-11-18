@@ -1,11 +1,11 @@
 // The settings: RecompFrontend's General, Controls, Graphics, Sound and Mods tabs, with its default bindings. Its own
 // Graphics options carry what a recomp needs: Resolution and MS Anti-Aliasing (high resolution), Framerate
 // (interpolation to the display's rate) and Aspect Ratio and HUD Placement (widescreen). The General tab adds Mouse
-// Sensitivity, mouse look (src/game/mouse_look.cpp): 50% on a new profile, as N64Recomp-browser's checklist has a new
-// profile's mouse look on, where RecompFrontend's own option starts at 0 and speaks of Zelda's items, so the tab
-// leaves its own out and adds this one. At 0 the camera is the console's and the cursor isn't held in the window. It
-// leaves out Rumble Strength and Gyro Sensitivity: the game has no Rumble Pak support (no osMotor in its code, no
-// "Rumble Pak" in its ROM) and nothing in it reads the gyro, so each would change nothing.
+// Sensitivity, mouse look (src/game/mouse_look.cpp): 50% on a new profile, so a new profile's mouse look is on, where
+// RecompFrontend's own option starts at 0 and speaks of Zelda's items, so the tab leaves its own out and adds this one.
+// At 0 the camera is the console's and the cursor isn't held in the window. It leaves out Rumble Strength and Gyro
+// Sensitivity: the game has no Rumble Pak support (no osMotor in its code, no "Rumble Pak" in its ROM) and nothing in
+// it reads the gyro, so each would change nothing.
 
 #include <filesystem>
 
