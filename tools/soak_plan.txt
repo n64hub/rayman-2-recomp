@@ -1,0 +1,143 @@
+# Rayman 2's soak plan: one round through the game's menus and scenes on its Linux build, in about 160 s with the boot,
+# for N64Recomp-browser's tools/frame_dump.mjs --soak (through tools/remote_frame_dump.sh, its header says how):
+#
+#   tools/remote_frame_dump.sh <game dir> Rayman2Recompiled rayman2.n64.us.1.0 <rom> tools/soak_plan.txt <out> --soak 160
+#
+# It fails on a Crash: line, the program exiting, the picture standing still for 10 s, or an until unmet (a level the
+# game never plays). The steps are tools/capture_window.ps1's, at seconds since the program started, each until moving
+# the later ones on by its wait. The title and Start (Enter) to the menu (its language first), a new game through it with A (Space) to
+# the intro story, then a change of level as the game's own exits ask for one (tools/survey.js says how): the next
+# level's name at 0x800E5D62 and mode 6 at 0x800E5D43, until the level's name at 0x800E5D44 (its letters either case,
+# up to its NUL: a shorter name copied over a longer one leaves the rest) and mode 9, playing. The prison ship, A
+# through its lines; the Woods of Light, walked and jumped about, and the pause menu with its Load and Options; the
+# world map, its prompt to save and the answer; the Fairy Glade, the Marshes of Awakening, the Menhir Hills, the Canopy
+# and Whale Bay with random input (W, A, S, D, A and B); the credits to the end. No player has reported a crash or a
+# hang in one scene of this game; a scene one does goes into the round. v0.1.18 passed it.
+2 until 0x800E5D44 0xDFDFDFDF 0x4D454E55 90 Enter
+6 shot 01_menu
+# New Game, a slot and a name with A (Space), to the intro story (jail_10)
+6 until 0x800E5D44 0xDFDFDFDF 0x4A41494C 90 Space
+6 until 0x800E5D40 0x000000FF 0x00000009 60
+16 shot 02_story
+# jail_20: the prison ship, A through its lines, then a walk
+16 poke 0x800E5D60 0x00006A61
+16 poke 0x800E5D64 0x696C5F32
+16 poke 0x800E5D68 0x30000000
+16 poke 0x800E5D6C 0x00000000
+16 poke 0x800E5D40 0x00000006
+16 until 0x800E5D44 0xDFDFDFDF 0x4A41494C 60
+16 until 0x800E5D48 0xDFDFDFFF 0x5F121000 60
+16 until 0x800E5D40 0x000000FF 0x00000009 60
+17 random Space
+23 random off
+23 shot 03_jail_20
+24 random W,A,S,D,Space,Shift
+28 random off
+28 shot 04_jail_20
+# learn_10: the Woods of Light, walked and jumped about, then the pause menu, its Load and Options
+28 poke 0x800E5D60 0x00006C65
+28 poke 0x800E5D64 0x61726E5F
+28 poke 0x800E5D68 0x31300000
+28 poke 0x800E5D6C 0x00000000
+28 poke 0x800E5D40 0x00000006
+28 until 0x800E5D44 0xDFDFDFDF 0x4C454152 60
+28 until 0x800E5D48 0xDFDFDFDF 0x4E5F1110 60
+28 until 0x800E5D40 0x000000FF 0x00000009 60
+29 random W,A,S,D,Space,Shift
+41 random off
+41 shot 05_learn_10
+42 key Enter
+44 shot 06_pause
+45.5 key S
+47 key Space
+48.5 key Shift
+50 key S
+51.5 key Space
+53 key S
+54.5 key Space
+56 key Shift
+57.5 key Shift
+59 shot 07_options
+59 key Enter
+# mapmonde: the world map, its prompt to save and the answer
+59 poke 0x800E5D60 0x00006D61
+59 poke 0x800E5D64 0x706D6F6E
+59 poke 0x800E5D68 0x64650000
+59 poke 0x800E5D6C 0x00000000
+59 poke 0x800E5D40 0x00000006
+59 until 0x800E5D44 0xDFDFDFDF 0x4D41504D 60
+59 until 0x800E5D48 0xDFDFDFDF 0x4F4E4445 60
+59 until 0x800E5D40 0x000000FF 0x00000009 60
+62 key Space
+65 shot 08_mapmonde
+65 key Space
+# learn_30: the Fairy Glade, random input
+65 poke 0x800E5D60 0x00006C65
+65 poke 0x800E5D64 0x61726E5F
+65 poke 0x800E5D68 0x33300000
+65 poke 0x800E5D6C 0x00000000
+65 poke 0x800E5D40 0x00000006
+65 until 0x800E5D44 0xDFDFDFDF 0x4C454152 60
+65 until 0x800E5D48 0xDFDFDFDF 0x4E5F1310 60
+65 until 0x800E5D40 0x000000FF 0x00000009 60
+66 random W,A,S,D,Space,Shift
+75 random off
+75 shot 09_learn_30
+# ski_10: the Marshes of Awakening, random input
+75 poke 0x800E5D60 0x0000736B
+75 poke 0x800E5D64 0x695F3130
+75 poke 0x800E5D68 0x00000000
+75 poke 0x800E5D6C 0x00000000
+75 poke 0x800E5D40 0x00000006
+75 until 0x800E5D44 0xDFDFDFDF 0x534B495F 60
+75 until 0x800E5D48 0xDFDFFF00 0x11100000 60
+75 until 0x800E5D40 0x000000FF 0x00000009 60
+76 random W,A,S,D,Space,Shift
+85 random off
+85 shot 10_ski_10
+# rodeo_10: the Menhir Hills, random input
+85 poke 0x800E5D60 0x0000726F
+85 poke 0x800E5D64 0x64656F5F
+85 poke 0x800E5D68 0x31300000
+85 poke 0x800E5D6C 0x00000000
+85 poke 0x800E5D40 0x00000006
+85 until 0x800E5D44 0xDFDFDFDF 0x524F4445 60
+85 until 0x800E5D48 0xDFDFDFDF 0x4F5F1110 60
+85 until 0x800E5D40 0x000000FF 0x00000009 60
+86 random W,A,S,D,Space,Shift
+95 random off
+95 shot 11_rodeo_10
+# water_10: the Canopy, random input
+95 poke 0x800E5D60 0x00007761
+95 poke 0x800E5D64 0x7465725F
+95 poke 0x800E5D68 0x31300000
+95 poke 0x800E5D6C 0x00000000
+95 poke 0x800E5D40 0x00000006
+95 until 0x800E5D44 0xDFDFDFDF 0x57415445 60
+95 until 0x800E5D48 0xDFDFDFDF 0x525F1110 60
+95 until 0x800E5D40 0x000000FF 0x00000009 60
+96 random W,A,S,D,Space,Shift
+105 random off
+105 shot 12_water_10
+# whale_05: Whale Bay, random input
+105 poke 0x800E5D60 0x00007768
+105 poke 0x800E5D64 0x616C655F
+105 poke 0x800E5D68 0x30350000
+105 poke 0x800E5D6C 0x00000000
+105 poke 0x800E5D40 0x00000006
+105 until 0x800E5D44 0xDFDFDFDF 0x5748414C 60
+105 until 0x800E5D48 0xDFDFDFDF 0x455F1015 60
+105 until 0x800E5D40 0x000000FF 0x00000009 60
+106 random W,A,S,D,Space,Shift
+115 random off
+115 shot 13_whale_05
+# staff_10: the credits
+115 poke 0x800E5D60 0x00007374
+115 poke 0x800E5D64 0x6166665F
+115 poke 0x800E5D68 0x31300000
+115 poke 0x800E5D6C 0x00000000
+115 poke 0x800E5D40 0x00000006
+115 until 0x800E5D44 0xDFDFDFDF 0x53544146 60
+115 until 0x800E5D48 0xDFDFDFDF 0x465F1110 60
+115 until 0x800E5D40 0x000000FF 0x00000009 60
+125 shot 14_credits

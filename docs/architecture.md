@@ -125,3 +125,5 @@ finding that explains the game's code goes here or beside that code.
   symlinks: `tools/save_plan.txt` is the save run's plan (a new game in the first slot, under the name it offers) and
   `tools/load_plan.txt` the load run's after the restart (the slot's line read off the pak as the game boots, the
   pak's bytes the same until a second game is saved, written through the links).
+  `tools/soak_plan.txt` plays one round of the game's menus and scenes on its Linux build, for a crash or a hang (its
+  header says how).
