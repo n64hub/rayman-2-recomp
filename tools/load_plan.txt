@@ -1,20 +1,20 @@
 # The load run of the save check (docs/architecture.md, Testing), after tools/save_plan.txt, the program started again
 # in the same folder: the game reads the pak's saves as it boots, and the first slot's line, "AAA 000.0" (at
 # 0x800C87AC, word-aligned), is in RDRAM by the language menu only if it came off the pak. Nothing is written by then.
-# Then a second game, in the second slot under the name it offers, BBB, the menus left 10 s to open and each press
-# 3 s after the last: A to English, A to NEW GAME, down to the second slot, A to its name and A to start, written
-# through the check's links.
+# Then a second game, in the second slot under the name it offers, BBB, written through the check's links: each step
+# pressed until the game shows it took (under Xvfb a menu missed a press now and then), by the menu on screen, its
+# cursor at 0x805DECD8 and its number of items at 0x805DECE0 (5 the languages, 3 the main menu, 8 the slots): A to
+# English, A to NEW GAME, down to the second slot, then A until the game plays its first level, jail_10 (its name,
+# then the game started, which saves it).
 0 until 0x800E5D44 0xDFDFDFDF 0x4D454E55 90 Enter
 1 find loaded 0x41414120,0x3030302E 20
-10 shot languages
-10.5 saves same
-11 key Space 100
-14 key Space 100
-17 key S 100
-18.5 shot slots
-20 key Space 100
-22.5 shot name
-23 key Space 100
-25 saves changed 15
-27 shot started
-28 end
+6 shot languages
+6.5 saves same
+7 until 0x805DECE0 0xFFFFFFFF 0x3 20 Space
+8 until 0x805DECE0 0xFFFFFFFF 0x8 20 Space
+9 until 0x805DECD8 0xFFFFFFFF 0x1 20 S
+10 shot slots
+10.5 until 0x800E5D44 0xDFDFDFDF 0x4A41494C 30 Space
+11 saves changed 15
+13 shot started
+14 end
