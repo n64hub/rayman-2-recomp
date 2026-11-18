@@ -1,0 +1,23 @@
+# The save run of the save check by machine on the Linux build (docs/architecture.md, Testing; with
+# tools/load_plan.txt): from the language menu, which a new profile opens on once the level is "menu" (its
+# name at 0x800E5D44, compared in upper case), A to English, A to NEW GAME, A to the first slot, and the name BD9
+# entered with the stick (up steps a letter on, A to B; right moves to the next; down steps one back, A to 9), each
+# key held 100 ms and 1.5 s apart (1 s apart, Rayman 2's name screen took some and not others). A starts the game,
+# which writes saves/controllerpak_1.mpk. The slot's line, "BD9 000.0", is then found in RDRAM, so a key the game took
+# twice fails this run, which checks nothing, and not the load run's find.
+0 until 0x800E5D44 0xDFDFDFDF 0x4D454E55 90 Enter
+8 key Space 100
+10.5 key Space 100
+13 key Space 100
+16 key W 100
+17.5 key D 100
+19 key W 100
+20.5 key W 100
+22 key D 100
+23.5 key S 100
+25 shot name
+25.5 key Space 100
+27 find saved 0x42443920,0x3030302E 10
+27.5 saves changed 15
+29 shot started
+30 end
