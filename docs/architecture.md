@@ -47,6 +47,11 @@ finding that explains the game's code goes here or beside that code.
   steps, start half the end, so the scene fogs over: the steps grew (42, 84, 168) and one, in a slow frame, took the
   end from 6 to -156, past the start, and the game closed (now and then: three runs in eight).
   `src/game/fog_range.cpp` puts the two in order instead, which draws the scene fogged over.
+- **The game's checks.** func_8008F86C is the game's stop when one of its own checks fails (a `break` 255, called from
+  some 22 places), which the runtime turns into `exit()`: the program closes, and the release, a windowed program, has
+  no console for what the runtime prints. `src/game/game_check.cpp` first shows the game function that called it and
+  the level's name in a message box and on stderr, so a player's report names the check. The recompiled calls don't
+  set ra (it reads 0 there), so the caller is found from the host return address, in N64Recomp's function table.
 - **Microcodes.** Graphics: F3DEX.NoN 1.23, which RT64 knows. Audio: `aspMain` (libultra's ABI 1), recompiled by
   RSPRecomp from `aspMain.us.toml`. librecomp's vector unit uses SSE4.1, so `RecompiledFuncs` builds with
   `-march=nehalem` on x86-64.

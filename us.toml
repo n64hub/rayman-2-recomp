@@ -251,3 +251,20 @@ text = "{ void r2_wait_framebuffer_hidden(uint8_t*, gpr); r2_wait_framebuffer_hi
 func = "func_8009138C"
 before_vram = 0x80091418
 text = "{ void r2_fog_range(uint8_t*, recomp_context*); r2_fog_range(rdram, ctx); }"
+
+# The game's own checks. func_8008F86C is the `break` (255) the game stops on when one of them fails, which the
+# runtime turns into the program closing with nothing said. src/game/game_check.cpp first says which check (the game
+# function that called, from the host return address; not on the web, where Emscripten gives none) and the level, in
+# a message box, so a player's report can name it.
+[[patches.hook]]
+func = "func_8008F86C"
+before_vram = 0x8008F86C
+text = '''
+{
+    void r2_game_check(uint8_t*, recomp_context*, void*);
+#ifdef __EMSCRIPTEN__
+    r2_game_check(rdram, ctx, 0);
+#else
+    r2_game_check(rdram, ctx, __builtin_return_address(0));
+#endif
+}'''

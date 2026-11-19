@@ -18,6 +18,10 @@ namespace r2 {
     // Maps the main and support segments at the addresses the game reads them to (register_overlays.cpp), before the
     // game runs.
     void map_code_sections();
+
+    // The game function (its address) whose recompiled code holds a host code address, such as a return address, or 0
+    // (register_overlays.cpp).
+    uint32_t game_function_at(const void* host_address);
 }
 
 // Mouse look (mouse_look.cpp): the mouse's motion since the last input poll, read at each one, or --input's.
