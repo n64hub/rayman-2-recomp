@@ -6,6 +6,9 @@
 # cursor at 0x805DECD8 and its number of items at 0x805DECE0 (5 the languages, 3 the main menu, 8 the slots): A to
 # English, A to NEW GAME, down to the second slot, then A until the game plays its first level, jail_10 (its name,
 # then the game started, which saves it).
+# Nothing is pressed until the game counts retraces, 0x800C8C3C at 64-127 (0xCCCCCCCC before the game clears it): Start
+# held as the game boots opens its Controller Pak manager, as on a console (docs/architecture.md, Testing).
+0 until 0x800C8C3C 0xFFFFFFC0 0x00000040 30
 0 until 0x800E5D44 0xDFDFDFDF 0x4D454E55 90 Enter
 1 find loaded 0x41414120,0x3030302E 20
 6 shot languages

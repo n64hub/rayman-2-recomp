@@ -12,6 +12,9 @@
 # has no settle limit: the sky's clouds scroll on for a second or two after the view has stopped. Walking has none
 # either: the game's camera swings back behind Rayman by its own design. v0.1.18 passed it, answering in 89-168 ms and
 # settling 220-385 ms after the release.
+# Nothing is pressed until the game counts retraces, 0x800C8C3C at 64-127 (0xCCCCCCCC before the game clears it): Start
+# held as the game boots opens its Controller Pak manager, as on a console (docs/architecture.md, Testing).
+0 until 0x800C8C3C 0xFFFFFFC0 0x00000040 30
 5 until 0x800E5D44 0xDFDFDFDF 0x4D454E55 60 Enter
 10 until 0x800E5D44 0xDFDFDFDF 0x4A41494C 90 Space
 # learn_10: the Woods of Light, playing
