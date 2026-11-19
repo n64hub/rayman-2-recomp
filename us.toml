@@ -242,3 +242,9 @@ text = "{ void r2_pak_manager_font(uint8_t*, recomp_context*); r2_pak_manager_fo
 func = "func_800FADC8"
 before_vram = 0x800FAEC8
 text = "{ void r2_wait_framebuffer_hidden(uint8_t*, gpr); r2_wait_framebuffer_hidden(rdram, ctx->r2 + ctx->r4); }"
+
+# DIAGNOSTIC (not for merge)
+[[patches.hook]]
+func = "func_8009138C"
+before_vram = 0x80091418
+text = "{ void r2_fog_range(uint8_t*, recomp_context*); r2_fog_range(rdram, ctx); }"
