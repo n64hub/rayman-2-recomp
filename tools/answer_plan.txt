@@ -1,0 +1,51 @@
+# Rayman 2's answer plan: a press reaches the picture at once and the view stays where the stick leaves it, on its
+# Linux build, for N64Recomp-browser's tools/frame_dump.mjs answer steps (through tools/remote_frame_dump.sh, its
+# header says how):
+#
+#   tools/remote_frame_dump.sh <game dir> Rayman2Recompiled rayman2.n64.us.1.0 <rom> tools/answer_plan.txt <out> --no-dump
+#
+# Each answer step presses a control from a view that holds still and fails when the picture answers later than 500 ms
+# after the press, or settles later than 1000 ms after the release. The title and Start (Enter) to the menu, a new game
+# with A (Space) to the intro story, then the Woods of Light (learn_10, as tools/soak_plan.txt changes level) once its
+# opening cutscene is over: first person (C-Up held, the Up arrow) looked right, down and up with the stick and with
+# the keys, and held for 1.5 s, each turned back by untimed pad steps; then Rayman walked from standing. Looking up
+# has no settle limit: the sky's clouds scroll on for a second or two after the view has stopped. Walking has none
+# either: the game's camera swings back behind Rayman by its own design. v0.1.18 passed it, answering in 89-168 ms and
+# settling 220-385 ms after the release.
+5 until 0x800E5D44 0xDFDFDFDF 0x4D454E55 60 Enter
+10 until 0x800E5D44 0xDFDFDFDF 0x4A41494C 90 Space
+# learn_10: the Woods of Light, playing
+20 poke 0x800E5D60 0x00006C65
+20.1 poke 0x800E5D64 0x61726E5F
+20.2 poke 0x800E5D68 0x31300000
+20.3 poke 0x800E5D40 0x00000006
+21 until 0x800E5D44 0xDFDFDFDF 0x4C454152 60
+22 until 0x800E5D40 0x000000FF 0x00000009 60
+60 shot control
+# first person, held to the end of the looks
+61 down Up
+63 shot fp
+64 answer look-right leftx 32767 0.4 500 1000
+69 pad leftx -32768
+69.4 pad leftx 0
+71 answer look-right-key key:d 1 0.4 500 1000
+76 key a 400
+78 answer look-down lefty -32768 0.4 500 1000
+83 pad lefty 32767
+83.4 pad lefty 0
+85 answer look-down-key key:w 1 0.4 500 1000
+90 key s 400
+92 answer look-up lefty 32767 0.4 500 -
+97 pad lefty -32768
+97.4 pad lefty 0
+99 answer look-up-key key:s 1 0.4 500 -
+104 key w 400
+106 answer look-hold leftx -32768 1.5 500 1000
+112 pad leftx 32767
+113.5 pad leftx 0
+115 shot fp-end
+115.5 up Up
+# third person: the camera follows Rayman by the game's design
+119 answer walk leftx 32767 0.4 500 -
+124 shot end
+125 end
