@@ -243,7 +243,10 @@ func = "func_800FADC8"
 before_vram = 0x800FAEC8
 text = "{ void r2_wait_framebuffer_hidden(uint8_t*, gpr); r2_wait_framebuffer_hidden(rdram, ctx->r2 + ctx->r4); }"
 
-# DIAGNOSTIC (not for merge)
+# A scene's fog. func_8009138C stops the game with its assertion when a fog's far distance isn't past its near one or
+# its end isn't past its start, which a scene's script pulling its fog in can reach in a slow frame: the program
+# closed. src/game/fog_range.cpp puts them in order at 0x80091418, after the near distance's floor of 1 and before
+# the checks.
 [[patches.hook]]
 func = "func_8009138C"
 before_vram = 0x80091418

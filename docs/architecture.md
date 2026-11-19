@@ -40,6 +40,13 @@ finding that explains the game's code goes here or beside that code.
   that some actors also take each frame to loop the animation and clear it before a script looked. Goin' Quackers, on
   the same engine, froze its player for good after a talk so, the speaker talking on. A hook in `us.toml` leaves the
   last frame to the full step, which sets the flag and loops a frame later.
+- **A scene's fog.** func_8009138C makes a fog light's multiplier and offset from its near and far distances and its
+  fog's start and end, and asserts (`break` 255 in func_8008F86C, which the runtime turns into `exit()`) that far is
+  past near and end past start. A scene's script can set all four for the whole scene (its opcodes 0x19 and 0x1A,
+  stored at 0x80057664 to 0x80057724), and in Razorbeard's cutscene (rhop_10) one pulls the end in towards zero by
+  steps, start half the end, so the scene fogs over: the steps grew (42, 84, 168) and one, in a slow frame, took the
+  end from 6 to -156, past the start, and the game closed (now and then: three runs in eight).
+  `src/game/fog_range.cpp` puts the two in order instead, which draws the scene fogged over.
 - **Microcodes.** Graphics: F3DEX.NoN 1.23, which RT64 knows. Audio: `aspMain` (libultra's ABI 1), recompiled by
   RSPRecomp from `aspMain.us.toml`. librecomp's vector unit uses SSE4.1, so `RecompiledFuncs` builds with
   `-march=nehalem` on x86-64.
