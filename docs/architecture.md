@@ -127,3 +127,5 @@ finding that explains the game's code goes here or beside that code.
   pak's bytes the same until a second game is saved, written through the links).
   `tools/soak_plan.txt` plays one round of the game's menus and scenes on its Linux build, for a crash or a hang (its
   header says how).
+  `tools/answer_plan.txt` presses the stick and the keys in first person in the Woods of Light, and checks the picture
+  answers at once and stays where the stick leaves it (its header says how).
