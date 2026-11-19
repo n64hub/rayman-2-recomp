@@ -7,7 +7,10 @@
 // while one loads, 6 asks for a change of level), then the level's name at 0x800E5D44, the next level's at 0x800E5D62
 // and the first level's ("menu") at 0x800E5D80, 30 bytes each. go(name) writes the next level's name and mode 6, and
 // the game loads that level as it does at a level's end. The game's own clock is the word at 0x800C8D84, 60 a second
-// of play, stopped while a level loads and 0 until the menu first draws: the plans' clock steps read it.
+// of play, stopped while a level loads and 0 until the menu first draws: the plans' clock steps read it. Start held as
+// the game boots opens its Controller Pak manager (docs/architecture.md, Testing), so a plan's first press waits for
+// booted(): the game's count of retraces, at 0x800C8C3C, starts only once that check is past (0xCCCCCCCC until the game
+// clears it).
 (() => {
   const byte = (a) => (n64r(a & ~3) >>> (24 - 8 * (a & 3))) & 255;
   const setByte = (a, v) => {
@@ -26,6 +29,15 @@
     clock: () => n64r(0x800C8D84),
     // The level's name and the mode, for a plan's log.
     where: () => `level ${r2.level() || '-'} mode ${r2.mode()} clock ${r2.clock()}`,
+    // Waits up to ms for the game to count a second of retraces, past the boot's check for Start held, true once it has.
+    booted: async (ms = 60000) => {
+      for (const t0 = Date.now(); Date.now() - t0 < ms; await sleep(100)) {
+        const count = n64r(0x800C8C3C);
+        if (count >= 60 && count < 0x10000000) return true;
+      }
+      console.log(`[survey] no retraces counted after ${ms} ms: ${r2.where()}`);
+      return false;
+    },
     // Waits up to ms for the game to play the level (mode 9), true once it does.
     playing: async (level, ms = 30000) => {
       for (const t0 = Date.now(); Date.now() - t0 < ms; await sleep(100)) {

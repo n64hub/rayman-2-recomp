@@ -13,6 +13,9 @@
 # world map, its prompt to save and the answer; the Fairy Glade, the Marshes of Awakening, the Menhir Hills, the Canopy
 # and Whale Bay with random input (W, A, S, D, A and B); the credits to the end. No player has reported a crash or a
 # hang in one scene of this game; a scene one does goes into the round. v0.1.18 passed it.
+# Nothing is pressed until the game counts retraces, 0x800C8C3C at 64-127 (0xCCCCCCCC before the game clears it): Start
+# held as the game boots opens its Controller Pak manager, as on a console (docs/architecture.md, Testing).
+0 until 0x800C8C3C 0xFFFFFFC0 0x00000040 30
 2 until 0x800E5D44 0xDFDFDFDF 0x4D454E55 90 Enter
 6 shot 01_menu
 # New Game, a slot and a name with A (Space), to the intro story (jail_10)

@@ -50,6 +50,10 @@
    "survey.js"
   ],
   [
+   "need",
+   "r2.booted()"
+  ],
+  [
    "pressUntil",
    "Enter",
    "Enter",

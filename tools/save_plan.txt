@@ -5,6 +5,9 @@
 # slot's line, "AAA 000.0", is in RDRAM, which it is only once the game is saved (an empty slot reads "---"): a press
 # a menu missed as it opened costs a press, not the run. The name is not typed: the name screen repeats a direction
 # held 200 ms and sometimes misses one held 100 ms.
+# Nothing is pressed until the game counts retraces, 0x800C8C3C at 64-127 (0xCCCCCCCC before the game clears it): Start
+# held as the game boots opens its Controller Pak manager, as on a console (docs/architecture.md, Testing).
+0 until 0x800C8C3C 0xFFFFFFC0 0x00000040 30
 0 until 0x800E5D44 0xDFDFDFDF 0x4D454E55 90 Enter
 3 find saved 0x41414120,0x3030302E 60 Space
 3.5 saves changed 15
