@@ -218,6 +218,7 @@ target_sources(Rayman2Recompiled PRIVATE
     ${CMAKE_SOURCE_DIR}/src/game/config.cpp
     ${CMAKE_SOURCE_DIR}/src/game/controller_pak.cpp
     ${CMAKE_SOURCE_DIR}/src/game/fog_range.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/game_check.cpp
     ${CMAKE_SOURCE_DIR}/src/game/libultra.cpp
     ${CMAKE_SOURCE_DIR}/src/game/mouse_look.cpp
     ${CMAKE_SOURCE_DIR}/src/game/recomp_api.cpp
