@@ -31,3 +31,20 @@ void r2::map_code_sections() {
     load_overlays(main_rom, (int32_t)main_ram, main_size);
     load_overlays(support_rom, (int32_t)support_ram, support_size);
 }
+
+// The game function a host code address lies in: the recompiled function that starts last at or before it. Each game
+// function is one C function, so an address inside one has its start as the nearest start below.
+uint32_t r2::game_function_at(const void* host_address) {
+    uintptr_t address = reinterpret_cast<uintptr_t>(host_address), best = 0;
+    uint32_t vram = 0;
+    for (const SectionTableEntry& section : section_table) {
+        for (size_t i = 0; i < section.num_funcs; i++) {
+            uintptr_t start = reinterpret_cast<uintptr_t>(section.funcs[i].func);
+            if (start <= address && start > best) {
+                best = start;
+                vram = section.ram_addr + section.funcs[i].offset;
+            }
+        }
+    }
+    return vram;
+}
