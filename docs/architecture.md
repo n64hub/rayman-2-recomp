@@ -62,6 +62,13 @@ finding that explains the game's code goes here or beside that code.
   Start held at boot opens the game's Controller Pak manager, whose font the game reads with CPU loads straight from
   the cartridge's address, which the runtime doesn't map: a hook in `us.toml` decodes it from the ROM the runtime holds
   (`controller_pak.cpp`). Without it, a player pressing Start through the logos crashed the program.
+  What a save holds is the 192 bytes at 0x800C70B0 (`func_8003E69C` writes them to the pak), the game's progress as
+  bits: the 1000 lums are 0x800C70BD-0x800C70D5 and 0x800C7108-0x800C716B, the world map's count. At a change of
+  level, with the byte at 0x800C7170 set, the game reads them back off the pak (`func_80026964`, `func_8003E250`), so
+  a bit set in RAM and not saved is gone at the next level. The score screen after a world's boss counts the world's
+  lums only once they are on the pak: with every lum's bit in RAM through Foutch's level, the mask and the score it read
+  0/50, and with the same bits written by the world map's save (rewritten every 0.2 s from its prompt to Yes, as
+  the map reads the pak back as it opens) 50/50, the bonus level open.
 - **The Expansion Pak.** The game finds the runtime's 8 MB and says so at boot ("Expansion Pak detected!").
 - **Input.** RecompFrontend's default bindings. Keyboard: WASD the stick, Space A, Left Shift B, Q Z, R R, E L, Enter
   Start, the arrows the C buttons, IJKL the D-pad. The game is for one player and reads port 1 only, so every pad and
