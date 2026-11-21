@@ -56,12 +56,13 @@ finding that explains the game's code goes here or beside that code.
   RSPRecomp from `aspMain.us.toml`. librecomp's vector unit uses SSE4.1, so `RecompiledFuncs` builds with
   `-march=nehalem` on x86-64.
 - **Saves.** The game saves only to a Controller Pak (libultra's `osPfs*`), so `main.cpp` declares no cartridge save
-  and `src/game/controller_pak.cpp` keeps a pak of 123 pages in `saves/controllerpak_1.mpk`, the format emulators use.
+  and turns on the runtime's pak in port 1 (`controller_pak_ports`; `librecomp/src/pak.cpp`, from N64Recomp-browser's
+  patches), a pak of 123 pages in `saves/controllerpak_1.mpk`, the format emulators use.
   The game reads the controllers' status for a pak first, so port 1 reports one (`main.cpp`,
   `get_connected_device_info`); with none it never leaves the save slots' screen.
   Start held at boot opens the game's Controller Pak manager, whose font the game reads with CPU loads straight from
   the cartridge's address, which the runtime doesn't map: a hook in `us.toml` decodes it from the ROM the runtime holds
-  (`controller_pak.cpp`). Without it, a player pressing Start through the logos crashed the program.
+  (`src/game/pak_manager.cpp`). Without it, a player pressing Start through the logos crashed the program.
   What a save holds is the 192 bytes at 0x800C70B0 (`func_8003E69C` writes them to the pak), the game's progress as
   bits: the 1000 lums are 0x800C70BD-0x800C70D5 and 0x800C7108-0x800C716B, the world map's count. At a change of
   level, with the byte at 0x800C7170 set, the game reads them back off the pak (`func_80026964`, `func_8003E250`), so

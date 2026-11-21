@@ -95,7 +95,7 @@ ultramodern::gfx_callbacks_t::gfx_data_t create_gfx() {
 }
 
 // Rayman 2 is one player's: port 1 has a controller, any pad or the keyboard, with a pak in it. The game reads the
-// controllers' status for a pak before it opens its Controller Pak save (src/game/controller_pak.cpp), and with none
+// controllers' status for a pak before it opens its Controller Pak save (the runtime's, librecomp/src/pak.cpp), and with none
 // it waits on the save slots' screen for good. ultramodern reports a pak for any Pak but None, and RumblePak is the
 // only other it has.
 ultramodern::input::connected_device_info_t get_connected_device_info(int controller_num) {
@@ -348,8 +348,10 @@ std::vector<recomp::GameEntry> supported_games = {
         .display_name = "Rayman 2: The Great Escape",
         .game_id = u8"rayman2.n64.us.1.0",
         .mod_game_id = "rayman2",
-        // The game saves to a Controller Pak (libultra's osPfs calls), which is no save type of the cartridge's.
+        // The game saves to a Controller Pak (libultra's osPfs calls), which is no save type of the cartridge's: the
+        // runtime's file-backed pak (librecomp/src/pak.cpp), in port 1, saves/controllerpak_1.mpk.
         .save_type = recomp::SaveType::None,
+        .controller_pak_ports = 0b0001,
         .thumbnail_bytes = std::span<const char>(icon_bytes),
         .is_enabled = true,
         .entrypoint_address = get_entrypoint_address(),
