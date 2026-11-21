@@ -123,8 +123,9 @@ finding that explains the game's code goes here or beside that code.
   frame before the models, and the frames between the next two drew the world swept from one shot to the other. With
   it, the frames at a cut pair nothing and show the new shot. RT64's test still missed the cuts
   between the cutscenes' still shots, the eye jumping 4-7.5 near plane distances (one world unit each) and turning
-  27-40 degrees, under its 8 and 45; `runtime-patches/rt64-2` also calls a cut a jump of more than 3 from a camera that
-  stood still the frame before, where the game's cameras moved off at most 1.5 and its flyovers move 4 a frame.
+  27-40 degrees, under its 8 and 45. N64Recomp-browser's RT64 also calls a cut a turn of more than 20 degrees or a jump
+  of more than 4 from a camera that stood still the frame before, which takes them all in: the game's cameras moved off
+  at most 1.5, and its flyovers move 4 a frame from a cut, after which the frame before's step isn't known.
   As the Woods of Light opens, the camera shakes, pitching a few degrees up and down about where it stands each frame.
   The camera object and the camera's superobject pitch one way, but the modelviews the frame's models are drawn with pitch
   the other: their view is the camera's at rest turned back by as much again, and is held nowhere found in RAM. So each
