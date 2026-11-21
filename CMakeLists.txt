@@ -216,7 +216,7 @@ target_sources(Rayman2Recompiled PRIVATE
     ${CMAKE_SOURCE_DIR}/src/main/register_overlays.cpp
     ${CMAKE_SOURCE_DIR}/src/game/camera_view.cpp
     ${CMAKE_SOURCE_DIR}/src/game/config.cpp
-    ${CMAKE_SOURCE_DIR}/src/game/controller_pak.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/pak_manager.cpp
     ${CMAKE_SOURCE_DIR}/src/game/fog_range.cpp
     ${CMAKE_SOURCE_DIR}/src/game/game_check.cpp
     ${CMAKE_SOURCE_DIR}/src/game/libultra.cpp

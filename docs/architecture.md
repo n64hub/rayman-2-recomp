@@ -56,12 +56,13 @@ finding that explains the game's code goes here or beside that code.
   RSPRecomp from `aspMain.us.toml`. librecomp's vector unit uses SSE4.1, so `RecompiledFuncs` builds with
   `-march=nehalem` on x86-64.
 - **Saves.** The game saves only to a Controller Pak (libultra's `osPfs*`), so `main.cpp` declares no cartridge save
-  and `src/game/controller_pak.cpp` keeps a pak of 123 pages in `saves/controllerpak_1.mpk`, the format emulators use.
+  and turns on the runtime's pak in port 1 (`controller_pak_ports`; `librecomp/src/pak.cpp`, from N64Recomp-browser's
+  patches), a pak of 123 pages in `saves/controllerpak_1.mpk`, the format emulators use.
   The game reads the controllers' status for a pak first, so port 1 reports one (`main.cpp`,
   `get_connected_device_info`); with none it never leaves the save slots' screen.
   Start held at boot opens the game's Controller Pak manager, whose font the game reads with CPU loads straight from
   the cartridge's address, which the runtime doesn't map: a hook in `us.toml` decodes it from the ROM the runtime holds
-  (`controller_pak.cpp`). Without it, a player pressing Start through the logos crashed the program.
+  (`src/game/pak_manager.cpp`). Without it, a player pressing Start through the logos crashed the program.
   What a save holds is the 192 bytes at 0x800C70B0 (`func_8003E69C` writes them to the pak), the game's progress as
   bits: the 1000 lums are 0x800C70BD-0x800C70D5 and 0x800C7108-0x800C716B, the world map's count. At a change of
   level, with the byte at 0x800C7170 set, the game reads them back off the pak (`func_80026964`, `func_8003E250`), so
@@ -122,8 +123,9 @@ finding that explains the game's code goes here or beside that code.
   frame before the models, and the frames between the next two drew the world swept from one shot to the other. With
   it, the frames at a cut pair nothing and show the new shot. RT64's test still missed the cuts
   between the cutscenes' still shots, the eye jumping 4-7.5 near plane distances (one world unit each) and turning
-  27-40 degrees, under its 8 and 45; `runtime-patches/rt64-2` also calls a cut a jump of more than 3 from a camera that
-  stood still the frame before, where the game's cameras moved off at most 1.5 and its flyovers move 4 a frame.
+  27-40 degrees, under its 8 and 45. N64Recomp-browser's RT64 also calls a cut a turn of more than 20 degrees or a jump
+  of more than 4 from a camera that stood still the frame before, which takes them all in: the game's cameras moved off
+  at most 1.5, and its flyovers move 4 a frame from a cut, after which the frame before's step isn't known.
   As the Woods of Light opens, the camera shakes, pitching a few degrees up and down about where it stands each frame.
   The camera object and the camera's superobject pitch one way, but the modelviews the frame's models are drawn with pitch
   the other: their view is the camera's at rest turned back by as much again, and is held nowhere found in RAM. So each

@@ -17,11 +17,6 @@ file per submodule, `<submodule>-<n>-<what>.patch`, numbered after that submodul
   held a picture from before. The scene transition, which blacks out the last frame from the CPU, showed that frame
   still and cut to black, or stopped its blotches partway; and the title screen, at the address of the 3D frames at
   another width, showed the last 3D frame until the next level's transition cut it to black.
-- `rt64-2-a-camera-that-stood-still-and-jumps-has-cut.patch`: RT64's camera-cut test (`RT64_SKIP_CAMERA_CUTS`) also
-  calls a cut an eye that jumped more than 3 of its near plane's distances from where it stood still the frame before.
-  The cutscenes hold each shot still and cut 4-7.5 of them away, turned 27-40 degrees, under the test's 8 and 45, so the
-  frames between drew the camera through the trees between two shots. What the frame before's step was is now -1 where
-  it isn't known (after a cut), not 0, so a flyover's second frame after a cut isn't taken for one.
 - `rt64-3-a-body-whose-translation-jumped-is-drawn-whole.patch`: under RT64's automatic interpolation, a transform
   whose translation isn't interpolated (it moved too far, or turned back) isn't rotated halfway either, but drawn where
   it is. Its rotation was always interpolated, so in the Woods of Light's opening shake, where every world matrix turns
