@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <cstdio>
+#include <cstdlib>
 
 #include "recomp.h"
 #include "ultramodern/config.hpp"
@@ -73,6 +75,28 @@ extern "C" void r2_widen_cull_planes(uint8_t* rdram, gpr camera) {
         store_f32(rdram, plane + 0x8, c / length);
         store_f32(rdram, plane + 0xC, d / length);
     }
+}
+
+// The frame's clear: func_80027718 has func_8008DC44 clear the depth buffer each frame, and the colour image too
+// (flags 3) only in a level that draws no sky of its own over the whole screen: in the others (flags 2) its 3D, sky
+// and scenery, covers a 4:3 screen, so a console never shows what is under it. A wide picture shows past what the
+// level builds for that view, and nothing cleared there, so the 3D drawn over it left trails of the frames before.
+// Returns the flags to clear with: the colour too in a wide picture, a fill of the level's fog colour that RT64 widens
+// to the window's edges, as the levels with a clear have; the game's at Original.
+extern "C" gpr r2_clear_flags(uint8_t* rdram, gpr flags) {
+    if (getenv("R2_CLEAR_DUMP")) { // DEBUG
+        static char last[16] = {};
+        static gpr last_flags = (gpr)-1;
+        char name[16];
+        for (int i = 0; i < 15; i++) { name[i] = (char)MEM_B(i, (gpr)(int32_t)0x800E5D44); if (!name[i]) break; }
+        name[15] = 0;
+        if (strcmp(name, last) != 0 || flags != last_flags) {
+            fprintf(stderr, "clear: level %s flags %d\n", name, (int)flags);
+            strcpy(last, name);
+            last_flags = flags;
+        }
+    }
+    return widescreen_scale() > 1.0f ? (flags | 1) : flags;
 }
 
 // Keeps a scaled rectangle's texture coordinates inside its texture. RT64 puts a texel's centre on its whole coordinate,
