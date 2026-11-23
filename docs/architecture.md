@@ -89,7 +89,10 @@ finding that explains the game's code goes here or beside that code.
   RT64 widens the 3D. Original (Aspect Ratio Original) is the console's 4:3. A menu's backdrop (the pause menu's swirl,
   while 0x800C87D0 is set) is an opaque gradient at 4:3 over the frame's clear, a fill of the level's fog colour that
   RT64 widens to the window's edges, so a hook in `us.toml` clears black under it: without it the sides show the level's
-  colour. `src/game/widescreen.cpp` widens what the game decides for a 4:3 screen: its culling planes, its sprites and
+  colour. The frame's clear (func_8008DC44) fills the colour image too in all but two levels: in helic_10 and helic_30
+  (the byte at 0x800C6DD0 clear) it clears the depth buffer alone, their 3D covering a 4:3 screen, so a wide picture's
+  sides would keep whatever frames before left there. `src/game/widescreen.cpp` has the colour
+  cleared too in a wide picture, and widens what the game decides for a 4:3 screen: its culling planes, its sprites and
   particles (projected on the CPU to texture rectangles and clipped to the screen, drawn past it with RT64's extended
   GBI under a scissor `RT64_SCISSOR_INSIDE_FRAMEBUFFER` counts only to the frame's edges), its full-screen fades, that
   backdrop's gradient and its HUD, whose bars, icons and the counters beside them it draws from the wide picture's edges
