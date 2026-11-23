@@ -1,9 +1,10 @@
 // Widescreen for what the game decides and draws for a 4:3 screen, which RT64's Aspect Ratio Expand (or Manual) widens
-// the picture past: its culling (us.toml's hook in func_8009989C), its full-screen 2D rectangles (the hook in
-// func_8009784C), a menu's backdrop (the hooks in func_80098D58), its sprites' clip to the screen (the hook in
-// func_800976E0) and its HUD, placed at a 4:3 screen's corners (the hooks in func_800BC53C and the sprites' and text's
-// drawers), each left alone at Original. Its scene transition, drawn from the CPU, needs nothing here: RT64 stretches
-// what the CPU writes across the wide picture (CMakeLists.txt), so the black spreads over the whole picture.
+// the picture past: its frame clear (us.toml's hook in func_80027718), its culling (the hook in func_8009989C), its
+// full-screen 2D rectangles (the hook in func_8009784C), a menu's backdrop (the hooks in func_80098D58), its sprites'
+// clip to the screen (the hook in func_800976E0) and its HUD, placed at a 4:3 screen's corners (the hooks in
+// func_800BC53C and the sprites' and text's drawers), each left alone at Original. Its scene transition, drawn from the
+// CPU, needs nothing here: RT64 stretches what the CPU writes across the wide picture (CMakeLists.txt), so the black
+// spreads over the whole picture.
 // The 2D rectangles' hook also joins a big image's tiles, which show their seams upscaled at any aspect.
 
 #include <algorithm>
@@ -73,6 +74,16 @@ extern "C" void r2_widen_cull_planes(uint8_t* rdram, gpr camera) {
         store_f32(rdram, plane + 0x8, c / length);
         store_f32(rdram, plane + 0xC, d / length);
     }
+}
+
+// The frame's clear: func_80027718 has func_8008DC44 clear the depth buffer each frame, and the colour image too
+// (flags 3) unless the byte at 0x800C6DD0 is clear (flags 2: helic_10 and helic_30), where the level's 3D covers a 4:3
+// screen, so a console never shows what is under it. A wide picture shows past what the
+// level builds for that view, and nothing cleared there, so the 3D drawn over it left trails of the frames before.
+// Returns the flags to clear with: the colour too in a wide picture, a fill of the level's fog colour that RT64 widens
+// to the window's edges, as the levels with a clear have; the game's at Original.
+extern "C" gpr r2_clear_flags(gpr flags) {
+    return widescreen_scale() > 1.0f ? (flags | 1) : flags;
 }
 
 // Keeps a scaled rectangle's texture coordinates inside its texture. RT64 puts a texel's centre on its whole coordinate,

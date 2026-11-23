@@ -120,6 +120,15 @@ func = "func_8008DC44"
 before_vram = 0x8008DE30
 text = "if (MEM_BU(0, (gpr)(int32_t)0x800C87D0) != 0) ctx->r3 = 1;"
 
+# The frame's clear in a wide picture. func_80027718 calls func_8008DC44 at 0x800278CC with its flags in a2: 3 (the
+# colour image and the depth buffer), or 2 (the depth buffer alone) where the byte at 0x800C6DD0 is clear (helic_10 and
+# helic_30), whose 3D covers a 4:3 screen. A wide picture shows past them, where nothing was cleared, so the 3D left
+# trails there; src/game/widescreen.cpp has the colour cleared too (none at Original).
+[[patches.hook]]
+func = "func_80027718"
+before_vram = 0x800278CC
+text = "{ gpr r2_clear_flags(gpr); ctx->r6 = r2_clear_flags(ctx->r6); }"
+
 # Widescreen culling. func_8009989C sets a camera up for a frame: its fields of view (+0x64 across, +0x68 up), its
 # projection (guPerspective) and the four planes at +0x98 that the game tests what it draws against, built for 4:3.
 # RT64 widens the 3D to the window but the game left out whatever was past those planes, so in a wide picture objects
